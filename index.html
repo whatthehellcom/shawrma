@@ -1,0 +1,1031 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHAWARMA MOUNTAIN: INF DEV MASTERPIECE</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+            margin: 0;
+            padding: 0;
+        }
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #060212;
+            font-family: 'Impact', 'Arial Black', sans-serif;
+        }
+        #game-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            max-width: 868px;
+            max-height: 480px;
+            margin: auto;
+            top: 50%;
+            transform: translateY(-50%);
+            box-shadow: 0 0 45px rgba(255, 110, 0, 0.5);
+            overflow: hidden;
+            background: #0f0a21;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+        .ui-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            color: white;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            padding: 20px;
+            text-align: center;
+        }
+        .hidden { display: none !important; }
+        
+        h1 { font-size: 3.2rem; color: #ffcc00; margin-bottom: 5px; transform: rotate(-0.5deg); letter-spacing: 1px; }
+        h2 { font-size: 1.5rem; color: #00ffcc; margin-bottom: 12px; }
+        
+        .btn {
+            background: linear-gradient(to bottom, #ff9900, #ff3300);
+            border: 3px solid #fff;
+            border-radius: 12px;
+            color: white;
+            padding: 8px 22px;
+            font-size: 1.2rem;
+            cursor: pointer;
+            margin: 5px;
+            box-shadow: 0 5px 0 #661100;
+            text-transform: uppercase;
+        }
+        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #661100; }
+        
+        .wallet-display {
+            background: rgba(0, 0, 0, 0.85);
+            border: 2px solid #ffff00;
+            padding: 6px 16px;
+            border-radius: 20px;
+            color: #ffff00;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+
+        /* NEW: Login & Profile Styles */
+        #nickname-input {
+            background: rgba(0,0,0,0.8); border: 3px solid #00ffcc; color: #ffff00;
+            font-size: 1.5rem; padding: 10px; text-align: center; font-family: 'Impact', sans-serif;
+            text-transform: uppercase; width: 80%; max-width: 320px; outline: none; border-radius: 8px;
+            margin-bottom: 15px; text-shadow: none;
+        }
+        #nickname-input::placeholder { color: #555; }
+        .color-swatches { display: flex; gap: 15px; margin-bottom: 25px; }
+        .color-swatch {
+            width: 45px; height: 45px; border-radius: 10px; border: 3px solid #333; 
+            cursor: pointer; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); transition: 0.1s;
+        }
+        .color-swatch.selected {
+            border-color: #fff; transform: scale(1.15); box-shadow: 0 0 15px #fff;
+        }
+
+        /* Responsive Map Grids */
+        .level-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 8px;
+            width: 95%;
+            margin: 10px 0;
+            max-height: 220px;
+            overflow-y: auto;
+            padding: 5px;
+        }
+        .lvl-btn {
+            background: linear-gradient(to bottom, #00ffcc, #0099cc);
+            border: 2px solid #fff;
+            border-radius: 8px;
+            color: #000;
+            font-size: 1rem;
+            font-weight: bold;
+            padding: 8px 4px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #004455;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .lvl-btn .status-tag { font-size: 0.65rem; margin-top: 2px; }
+        .lvl-btn.done {
+            background: linear-gradient(to bottom, #a0ff80, #4caf50) !important;
+            color: white !important;
+            box-shadow: 0 4px 0 #1e5222 !important;
+        }
+        .lvl-btn.shatter-tier {
+            background: linear-gradient(to bottom, #ff5722, #b71c1c);
+            color: white;
+            box-shadow: 0 4px 0 #4a0000;
+        }
+        
+        /* Mall Windows Layouts Tabs */
+        .shop-tabs { display: flex; gap: 5px; margin-bottom: 8px; max-width: 95%; overflow-x: auto; padding-bottom: 3px; }
+        .tab-btn { background: #241147; border: 2px solid #00ffcc; color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; }
+        .tab-btn.active { background: #00ffcc; color: #000; font-weight: bold; }
+        .shop-grid { display: flex; gap: 10px; overflow-x: auto; width: 95%; padding: 10px 5px; min-height: 165px; }
+        .shop-card {
+            background: rgba(0,0,0,0.88); border: 3px solid #00ffcc; border-radius: 10px;
+            padding: 8px; min-width: 125px; text-align: center; flex-shrink: 0;
+        }
+        .shop-card.selected { border-color: #ffff00; background: rgba(255,255,0,0.12); }
+        .shop-card h4 { font-size: 0.9rem; margin-bottom: 4px; }
+        .price-tag { color: #ffff00; font-size: 0.85rem; margin-top: 4px; font-weight: bold; }
+
+        /* Tactical Active HUD Overlays */
+        #hud {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .hud-item { background: rgba(0,0,0,0.75); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 1.05rem; }
+        
+        #side-action-tray {
+            position: absolute;
+            top: 75px;
+            right: 10px;
+            z-index: 6;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .power-trigger {
+            background: linear-gradient(to bottom, #ff1744, #b71c1c);
+            border: 2px solid #fff; color: #fff; border-radius: 50%;
+            width: 56px; height: 56px; font-size: 0.72rem; cursor: pointer;
+            box-shadow: 0 4px 0 #4a0000; font-weight: bold;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .power-trigger:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a0000; }
+        .power-trigger span { font-size: 0.62rem; color: #ffff00; }
+
+        #ingame-escape-panel {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            z-index: 6;
+            display: flex;
+            gap: 6px;
+        }
+        .esc-btn {
+            background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; color: #fff;
+            border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- Active Run HUD Matrix Overlay -->
+    <div id="hud" class="hidden">
+        <div style="display: flex; gap: 5px;">
+            <div class="hud-item" style="color: #ffff00;">🏔️ Map: <span id="hud-level">1</span></div>
+            <div class="hud-item" style="color: #00ffcc;">💰 Wallet: <span id="hud-coins">0</span></div>
+        </div>
+        <div class="hud-item">🌯 Alt: <span id="hud-height">0</span>m</div>
+    </div>
+
+    <!-- Power Hotkeys Tray Panel -->
+    <div id="side-action-tray" class="hidden">
+        <button class="power-trigger" id="btn-use-pocket-rocket">🚀🚀<br>LAUNCH<br><span id="count-pocket-rocket">x0</span></button>
+    </div>
+
+    <!-- Escape Options Trigger HUD Panel -->
+    <div id="ingame-escape-panel" class="hidden">
+        <button class="esc-btn" id="btn-quick-restart">🔄 RESTART</button>
+        <button class="esc-btn" id="btn-quick-quit">🚪 LEAVE</button>
+    </div>
+
+    <!-- INITIAL LOGIN SCREEN (NEW) -->
+    <div id="login-screen" class="ui-screen hidden" style="background: rgba(10,5,30,0.98);">
+        <h1 style="font-size: 2.8rem; margin-bottom: 20px;">CREATE CLIMBER</h1>
+        
+        <h2 style="font-size: 1.2rem; color: #fff; margin-bottom: 5px;">ENTER NICKNAME:</h2>
+        <input type="text" id="nickname-input" placeholder="HERO NAME" maxlength="12" autocomplete="off" />
+        
+        <h2 style="font-size: 1.2rem; color: #fff; margin-bottom: 10px; margin-top: 10px;">SELECT ARMOR COLOR:</h2>
+        <div class="color-swatches" id="color-picker">
+            <div class="color-swatch selected" data-color="#ff5722" style="background: #ff5722;"></div> <!-- Orange -->
+            <div class="color-swatch" data-color="#4caf50" style="background: #4caf50;"></div> <!-- Green -->
+            <div class="color-swatch" data-color="#2196f3" style="background: #2196f3;"></div> <!-- Blue -->
+            <div class="color-swatch" data-color="#e91e63" style="background: #e91e63;"></div> <!-- Pink -->
+            <div class="color-swatch" data-color="#ffffff" style="background: #ffffff;"></div> <!-- White -->
+        </div>
+
+        <button class="btn" id="btn-save-profile" style="background: #00ffcc; color: #000; border-color: #fff; font-size: 1.4rem;">ENTER MOUNTAIN</button>
+    </div>
+
+    <!-- HOME HUB CORE DISPLAY SCREEN -->
+    <div id="menu-screen" class="ui-screen hidden">
+        <h1>SHAWARMA MOUNTAIN</h1>
+        <div id="menu-greeting" style="font-size: 1.3rem; color: #00ffcc; margin-bottom: 8px; font-weight: bold; text-shadow: 2px 2px 0 #000;"></div>
+        <h2>CLIMB THE ULTIMATE SHATTER PEAKS!</h2>
+        <div class="wallet-display">💰 My Stored Pouch: <span id="menu-wallet">0</span> Coins</div>
+        <button class="btn" id="btn-go-select">CHOOSE LEVEL MAP (1 - 15)</button>
+        <button class="btn" id="btn-go-shop" style="background: #1b113a; border-color: #ffff00;">UPGRADE MALL SHOP</button>
+    </div>
+
+    <!-- RESTRUCTURABLE CENTRALIZED STOREFRONT FRAME -->
+    <div id="shop-screen" class="ui-screen hidden" style="background: rgba(10, 5, 22, 0.99);">
+        <h2 style="color: #ffff00; font-size: 1.8rem; margin-bottom: 2px;">UPGRADE MALL SHOP</h2>
+        <div class="wallet-display" style="font-size:1.1rem; padding:3px 12px;">💰 Pocket Balance: <span id="shop-wallet">0</span> Coins</div>
+        
+        <div class="shop-tabs">
+            <button class="tab-btn active" id="tab-chars" onclick="switchShopTab('chars')">HEROES</button>
+            <button class="tab-btn" id="tab-clothes" onclick="switchShopTab('clothes')">CLOTHING</button>
+            <button class="tab-btn" id="tab-rockets" onclick="switchShopTab('rockets')">ROCKETS</button>
+            <button class="tab-btn" id="tab-pets" onclick="switchShopTab('pets')">ANIMAL PETS</button>
+            <button class="tab-btn" id="tab-items" onclick="switchShopTab('items')">UTILITIES</button>
+        </div>
+
+        <div class="shop-grid" id="shop-items-binder">
+            <!-- Populated on data cycles directly -->
+        </div>
+
+        <button class="btn" id="btn-shop-back" style="background:#333; font-size: 0.95rem; padding: 4px 14px;">BACK MENU</button>
+    </div>
+
+    <!-- MAP LEVEL SELECT GRID SELECTOR MATRIX -->
+    <div id="select-screen" class="ui-screen hidden" style="background: rgba(13,6,28,0.97);">
+        <h2 style="color: #ffcc00; font-size: 2rem; margin-bottom: 4px;">CHOOSE MOUNTAIN PEAK</h2>
+        <div class="level-grid" id="map-buttons-container"></div>
+        <button class="btn" id="btn-select-back" style="background: #333; font-size:0.95rem;">MAIN MENU</button>
+    </div>
+
+    <!-- LEVEL COLLISION RUN CRASH SCREEN -->
+    <div id="gameover-screen" class="ui-screen hidden" style="background: rgba(200,10,40,0.4);">
+        <h1 style="color: #ff3333; font-size: 3.2rem;">💥 CRASHED! 💥</h1>
+        <button class="btn" id="btn-retry">TRY AGAIN</button>
+        <button class="btn" id="btn-menu-back" style="background: #222;">LEVEL MAP</button>
+    </div>
+
+    <!-- STAGE COMPLETE CLEAR CELEBRATION MODAL -->
+    <div id="win-screen" class="ui-screen hidden" style="background: rgba(0,220,120,0.4);">
+        <h1 style="color: #00ffcc; font-size: 3.2rem;">🎉 MAP CLEARED! 🎉</h1>
+        <p style="font-size: 1.4rem; color: #fff000; margin-bottom: 15px;">THE SHAWARMA HAS BEEN RECLAIMED!</p>
+        <button class="btn" id="btn-next-level" style="background: linear-gradient(to bottom, #00ff66, #009933); box-shadow: 0 5px 0 #003311;">NEXT CLIMB</button>
+        <button class="btn" id="btn-win-back" style="background: #222;">LEVEL MAP</button>
+    </div>
+
+    <!-- Core Canvas System Layer -->
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 868;
+canvas.height = 480;
+
+const STATE = { LOGIN: -1, MENU: 0, SELECT: 1, PLAYING: 2, GAMEOVER: 3, WIN: 4, SHOP: 5 };
+let currentGameState = STATE.MENU;
+
+let activeLevel = 1;
+let currentCameraY = 0;
+let keys = {};
+
+// SYSTEM VOLATILE CACHE DATA REPOSITORIES (Hooked to LocalStorage)
+let playerNickname = "";
+let playerBaseColor = "#ff5722";
+
+let walletCoins = 200; 
+let completedLevels = {};
+let activeShopTab = 'chars';
+
+let platforms = [];
+let obstacles = [];
+let coins = [];
+let rockets = [];
+let bombs = [];
+let giantShawarma = null;
+
+// ============================================================================
+// SYSTEM SHOP STRUCTURE MATRIX REGISTRIES
+// ============================================================================
+let shopData = {
+    chars: [
+        { id: 'base', name: 'Base Skin', cost: 0, val: '#ff5722', owned: true }, // Color updates dynamically on load
+        { id: 'ninja', name: 'Cyber Ninja', cost: 35, val: '#9c27b0', owned: false },
+        { id: 'chef', name: 'Cosmic Chef', cost: 75, val: '#00bcd4', owned: false },
+        { id: 'gold', name: 'Solid Gold Bot', cost: 140, val: '#ffeb3b', owned: false }
+    ],
+    clothes: [
+        { id: 'naked', name: 'Standard Uniform', cost: 0, val: 'none', owned: true },
+        { id: 'cape', name: 'Royal Crimson Cape', cost: 30, val: '#d50000', owned: false },
+        { id: 'chain', name: 'Bling Gold Chains', cost: 60, val: '#ffd700', owned: false },
+        { id: 'cyber', name: 'Neon Cyber Vest', cost: 100, val: '#00ffcc', owned: false }
+    ],
+    rockets: [
+        { id: 'std', name: 'Basic Rocket', cost: 0, val: -21, owned: true },
+        { id: 'fire', name: 'Super Fire', cost: 45, val: -26, owned: false },
+        { id: 'plasma', name: 'Plasma Core Blast', cost: 95, val: -32, owned: false }
+    ],
+    pets: [
+        { id: 'none', name: 'No Companion', cost: 0, val: 'none', owned: true },
+        { id: 'cat', name: 'Whiskers Cat', cost: 40, val: 'cat', owned: false },
+        { id: 'dog', name: 'Barkley Dog', cost: 50, val: 'dog', owned: false },
+        { id: 'turtle', name: 'Shelly Turtle', cost: 70, val: 'turtle', owned: false },
+        { id: 'bird', name: 'Pip Bird', cost: 90, val: 'bird', owned: false }
+    ],
+    items: [
+        { id: 'pkt_rkt', name: 'Pocket Rocket Item', cost: 20, val: 'utility', count: 1 }
+    ]
+};
+
+let activeSelections = { chars: 0, clothes: 0, rockets: 0, pets: 0 };
+
+// LOCALSTORAGE PERSISTENCE ENGINE SYNC PIPELINES
+function saveAccountStateToDisk() {
+    const backupPack = {
+        playerNickname,
+        playerBaseColor,
+        walletCoins,
+        completedLevels,
+        activeSelections,
+        unlockedChars: shopData.chars.map(c => c.owned),
+        unlockedClothes: shopData.clothes.map(c => c.owned),
+        unlockedRockets: shopData.rockets.map(r => r.owned),
+        unlockedPets: shopData.pets.map(p => p.owned),
+        pocketRocketItemCount: shopData.items[0].count
+    };
+    localStorage.setItem('SHAWARMA_MOUNTAIN_DISK_DATA', JSON.stringify(backupPack));
+}
+
+function loadAccountStateFromDisk() {
+    try {
+        const raw = localStorage.getItem('SHAWARMA_MOUNTAIN_DISK_DATA');
+        if (!raw) return false;
+        const backup = JSON.parse(raw);
+        
+        playerNickname = backup.playerNickname || "";
+        playerBaseColor = backup.playerBaseColor || "#ff5722";
+        
+        walletCoins = backup.walletCoins ?? 200;
+        completedLevels = backup.completedLevels ?? {};
+        activeSelections = backup.activeSelections ?? { chars: 0, clothes: 0, rockets: 0, pets: 0 };
+        
+        if(backup.unlockedChars) backup.unlockedChars.forEach((o, i) => { if(shopData.chars[i]) shopData.chars[i].owned = o; });
+        if(backup.unlockedClothes) backup.unlockedClothes.forEach((o, i) => { if(shopData.clothes[i]) shopData.clothes[i].owned = o; });
+        if(backup.unlockedRockets) backup.unlockedRockets.forEach((o, i) => { if(shopData.rockets[i]) shopData.rockets[i].owned = o; });
+        if(backup.unlockedPets) backup.unlockedPets.forEach((o, i) => { if(shopData.pets[i]) shopData.pets[i].owned = o; });
+        if(backup.pocketRocketItemCount !== undefined) shopData.items[0].count = backup.pocketRocketItemCount;
+        
+        // Apply player chosen identity to base shop character
+        shopData.chars[0].val = playerBaseColor;
+        shopData.chars[0].name = playerNickname ? `${playerNickname}'s Gear` : 'Base Skin';
+
+        return true;
+    } catch(e) { console.error("Disk load error, resetting parameters.", e); return false; }
+}
+
+// ============================================================================
+// RETRO ARCADE AUDIO SYNTH ENGINE
+// ============================================================================
+const Sound = {
+    ctx: null,
+    init() { if(!this.ctx) this.ctx = new(window.AudioContext || window.webkitAudioContext)(); },
+    play(freq, type, dur, vol=0.08) {
+        if(!this.ctx) return;
+        let o = this.ctx.createOscillator(); let g = this.ctx.createGain();
+        o.type = type; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        g.gain.setValueAtTime(vol, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + dur);
+        o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + dur);
+    },
+    jump() { this.play(360, 'square', 0.07); },
+    coin() { this.play(1050, 'sine', 0.06); setTimeout(()=>this.play(1400, 'sine', 0.09), 30); },
+    rocket() { this.play(130, 'sawtooth', 0.45); setTimeout(()=>this.play(750, 'sine', 0.25), 60); },
+    win() { this.play(530, 'sine', 0.08); setTimeout(()=>this.play(800, 'sine', 0.2), 70); },
+    fail() { this.play(85, 'sawtooth', 0.3, 0.15); },
+    shatter() { this.play(190, 'triangle', 0.15, 0.2); }
+};
+
+// ============================================================================
+// CHARACTER CONTROLLER AND FOLLOWER ANIMATED PET ENGINES
+// ============================================================================
+class Character {
+    constructor() {
+        this.x = 400; this.y = 400; this.width = 28; this.height = 42;
+        this.vx = 0; this.vy = 0; this.speed = 5.6; this.jumpPower = -11.5; this.gravity = 0.52;
+        this.onGround = false; this.trail = [];
+    }
+    reset() {
+        this.x = 400; this.y = 400; this.vx = 0; this.vy = 0; this.onGround = false; this.trail = [];
+    }
+    update() {
+        if (keys['ArrowLeft'] || keys['KeyA']) this.vx = -this.speed;
+        else if (keys['ArrowRight'] || keys['KeyD']) this.vx = this.speed;
+        else this.vx *= 0.76;
+
+        this.vy += this.gravity; this.x += this.vx; this.y += this.vy;
+
+        if (this.x < 0) this.x = 0;
+        if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+        if (this.y > 420) { this.y = 420; this.vy = 0; this.onGround = true; }
+
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > 14) this.trail.shift();
+    }
+    jump() {
+        if (this.onGround) { this.vy = this.jumpPower; this.onGround = false; Sound.jump(); }
+    }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        
+        // Render Active Clothing Backdrop Gear (Capes)
+        let clothesType = shopData.clothes[activeSelections.clothes].id;
+        if (clothesType === 'cape') {
+            ctx.fillStyle = '#d50000';
+            ctx.beginPath(); ctx.moveTo(-4, 18); ctx.lineTo(6, 14); ctx.lineTo(4, 42); ctx.lineTo(-8, 38); ctx.fill();
+        }
+
+        // Main Character Skin Base Frame
+        ctx.fillStyle = shopData.chars[activeSelections.chars].val;
+        ctx.fillRect(0, 12, this.width, this.height - 12);
+        
+        // Render Active Clothing Overlay Gear (Vests/Chains)
+        if (clothesType === 'cyber') {
+            ctx.fillStyle = '#00ffcc'; ctx.fillRect(2, 18, this.width - 4, 14);
+            ctx.fillStyle = '#111'; ctx.fillRect(8, 20, 12, 4);
+        } else if (clothesType === 'chain') {
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(this.width/2, 16, 6, 0, Math.PI); ctx.stroke();
+        }
+
+        ctx.fillStyle = '#ffebd6'; ctx.fillRect(2, 0, this.width - 4, 14); // Face mapping
+        ctx.fillStyle = '#000'; ctx.fillRect(5, 4, 3, 4); ctx.fillRect(16, 4, 3, 4); // Eyes
+        ctx.restore();
+
+        // Render Distinct Animal Pet Follower
+        let activePet = shopData.pets[activeSelections.pets];
+        if (activePet && activePet.id !== 'none' && this.trail.length > 0) {
+            let petPos = this.trail[0];
+            let bounceY = Math.sin(Date.now() / 130) * 5;
+            ctx.save(); ctx.translate(petPos.x - 16, petPos.y - 10 - currentCameraY + bounceY);
+            
+            if (activePet.id === 'cat') {
+                ctx.fillStyle = '#ffb300'; ctx.beginPath(); ctx.arc(8, 8, 8, 0, Math.PI*2); ctx.fill(); // Body
+                ctx.beginPath(); ctx.moveTo(1,2); ctx.lineTo(5,8); ctx.lineTo(1,8); ctx.fill(); // Left Ear
+                ctx.beginPath(); ctx.moveTo(15,2); ctx.lineTo(11,8); ctx.lineTo(15,8); ctx.fill(); // Right Ear
+                ctx.fillStyle = '#000'; ctx.fillRect(4,6,2,2); ctx.fillRect(10,6,2,2); // Eyes
+            } 
+            else if (activePet.id === 'dog') {
+                ctx.fillStyle = '#8d6e63'; ctx.fillRect(0, 4, 16, 12); // Head/Body
+                ctx.fillStyle = '#4e342e'; ctx.fillRect(-2, 4, 4, 8); ctx.fillRect(14, 4, 4, 8); // Long Drooping Ears
+                ctx.fillStyle = '#000'; ctx.fillRect(4, 6, 2, 2); ctx.fillRect(10, 6, 2, 2);
+            } 
+            else if (activePet.id === 'turtle') {
+                ctx.fillStyle = '#2e7d32'; ctx.beginPath(); ctx.arc(8, 8, 9, 0, Math.PI*2); ctx.fill(); // Shell back
+                ctx.fillStyle = '#81c784'; ctx.beginPath(); ctx.arc(15, 8, 4, 0, Math.PI*2); ctx.fill(); // Head front protrusion
+                ctx.fillStyle = '#000'; ctx.fillRect(14, 6, 1, 2);
+            } 
+            else if (activePet.id === 'bird') {
+                ctx.fillStyle = '#29b6f6'; ctx.beginPath(); ctx.arc(8, 6, 7, 0, Math.PI*2); ctx.fill(); // Wing torso
+                ctx.fillStyle = '#ffb300'; ctx.beginPath(); ctx.moveTo(14, 5); ctx.lineTo(19, 7); ctx.lineTo(14, 9); ctx.fill(); // Beak
+                let wingFlap = Math.sin(Date.now() / 60) > 0 ? 0 : 6;
+                ctx.fillStyle= '#0288d1'; ctx.fillRect(3, 4 + wingFlap, 6, 4); // Interactive flappable side wings
+            }
+            ctx.restore();
+        }
+    }
+}
+const player = new Character();
+
+// ============================================================================
+// LEVEL ENTITIES BLUEPRINTS (Platforms & Procedural Obstacles)
+// ============================================================================
+class Platform {
+    constructor(x, y, width, speed = 0, isCrumbling = false) {
+        this.x = x; this.y = y; this.width = width; this.height = 16;
+        this.speed = speed; this.dir = 1;
+        this.isCrumbling = isCrumbling;
+        this.shatterTimer = -1; // Detonation states tracking counter
+        this.dead = false;
+    }
+    update() {
+        if (this.dead) return;
+        if (this.speed > 0) {
+            this.x += this.speed * this.dir;
+            if (this.x < 30 || this.x + this.width > canvas.width - 30) this.dir *= -1;
+        }
+        // Step processing countdown context evaluations for shattering bridges elements
+        if (this.shatterTimer > 0) {
+            this.shatterTimer--;
+            if (this.shatterTimer === 0) { this.dead = true; Sound.shatter(); }
+        }
+    }
+    draw() {
+        if (this.dead) return;
+        if (this.isCrumbling) {
+            // Blinks orange/red if decaying under foot trigger pressure vectors
+            ctx.fillStyle = (this.shatterTimer > 0 && Math.floor(this.shatterTimer / 4) % 2 === 0) ? '#ff3300' : '#ff9800';
+            ctx.fillRect(this.x, this.y - currentCameraY, this.width, this.height);
+            ctx.fillStyle = '#ffb74d'; ctx.fillRect(this.x, this.y - currentCameraY, this.width, 4);
+            // Cracks details layout indicator lines
+            ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(this.x + 20, this.y - currentCameraY); ctx.lineTo(this.x + 35, this.y + 12 - currentCameraY); ctx.stroke();
+        } else {
+            ctx.fillStyle = '#4caf50'; ctx.fillRect(this.x, this.y - currentCameraY, this.width, this.height);
+            ctx.fillStyle = '#8bc34a'; ctx.fillRect(this.x, this.y - currentCameraY, this.width, 4);
+        }
+    }
+}
+
+class MorphingObstacle {
+    constructor(x, y, width, variationSeed) {
+        this.x = x; this.y = y; this.width = width; this.height = 14;
+        this.type = variationSeed % 3; // 0: Sharp Teeth, 1: Spiked Chain Links, 2: Saw Blades Array
+    }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        
+        if (this.type === 0) { // Shape Variant A: Sharp Teeth Spikes
+            ctx.fillStyle = '#ff1744';
+            for (let i = 0; i < this.width; i += 14) {
+                ctx.beginPath(); ctx.moveTo(i, this.height); ctx.lineTo(i + 7, 0); ctx.lineTo(i + 14, this.height); ctx.fill();
+            }
+        } 
+        else if (this.type === 1) { // Shape Variant B: Heavy Spiked Chains Blocks
+            ctx.strokeStyle = '#b0bec5'; ctx.lineWidth = 3;
+            ctx.strokeRect(0, 4, this.width, 6);
+            ctx.fillStyle = '#cfd8dc';
+            for (let i = 4; i < this.width; i += 16) {
+                ctx.beginPath(); ctx.arc(i, 2, 4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(i, 12, 4, 0, Math.PI*2); ctx.fill();
+            }
+        } 
+        else { // Shape Variant C: Spinning Saw Disc Teeth Elements
+            ctx.fillStyle = '#78909c';
+            ctx.strokeStyle = '#37474f'; ctx.lineWidth = 1;
+            let spinPhase = (Date.now() / 4) % 360;
+            for (let i = 0; i < this.width; i += 20) {
+                ctx.save(); ctx.translate(i + 10, 7); ctx.rotate(spinPhase * Math.PI / 180);
+                ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#d32f2f';
+                for(let r=0; r<8; r++) { ctx.rotate(Math.PI/4); ctx.fillRect(6, -2, 4, 4); }
+                ctx.restore();
+            }
+        }
+        ctx.restore();
+    }
+}
+
+class Coin {
+    constructor(x, y) { this.x = x; this.y = y; this.collected = false; }
+    draw() {
+        if (this.collected) return;
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        ctx.fillStyle = '#ffeb3b'; ctx.strokeStyle = '#f57f17'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(7, 7, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+    }
+}
+
+class Rocket {
+    constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 24; this.used = false; }
+    draw() {
+        if (this.used) return;
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        ctx.fillStyle = '#2196f3'; ctx.fillRect(0, 6, this.w, this.h - 6);
+        ctx.fillStyle = '#ff1744'; ctx.beginPath(); ctx.moveTo(0,6); ctx.lineTo(this.w/2, 0); ctx.lineTo(this.w, 6); ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Bomb {
+    constructor(x, y) { this.x = x; this.y = y; this.w = 18; this.h = 18; }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY); ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.arc(9, 9, 9, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ff9800'; ctx.fillRect(8, -2, 2, 4);
+        ctx.restore();
+    }
+}
+
+class GiantShawarmaTarget {
+    constructor(y) { this.x = canvas.width / 2 - 45; this.y = y; this.width = 90; this.height = 110; }
+    draw() {
+        ctx.save(); ctx.translate(this.x + 45, this.y + 55 - currentCameraY);
+        let scale = 1 + Math.sin(Date.now() / 100) * 0.05; ctx.scale(scale, scale);
+        ctx.fillStyle = '#fffdf0'; ctx.fillRect(-40, -45, 80, 85);
+        ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3; ctx.strokeRect(-40, -45, 80, 85);
+        ctx.fillStyle = '#5d4037'; ctx.fillRect(-35, -58, 70, 14);
+        ctx.fillStyle = '#000'; ctx.font = 'bold 12px sans-serif'; ctx.fillText("GOAL!", -15, 10);
+        ctx.restore();
+    }
+}
+
+// ============================================================================
+// DYNAMIC PROCEDURAL UNIQUE STAGE GEOMETRY LAYOUT MATRIX
+// ============================================================================
+function generateLevelStructure(levelNum) {
+    platforms = []; obstacles = []; coins = []; rockets = []; bombs = []; currentCameraY = 0;
+
+    let gapDistance = 53; 
+    let pWidth = 135 - (levelNum * 2.5); 
+    let horizontalSpeed = (levelNum > 3 && levelNum <= 10) ? Math.min(4, levelNum * 0.4) : 0;
+    
+    // Boost configuration vectors metrics across newly unlocked extreme stages levels 11-15
+    if (levelNum >= 11) {
+        horizontalSpeed = Math.min(5.5, (levelNum - 10) * 0.8);
+    }
+
+    let seedY = 340;
+    let indexCounter = 0;
+
+    while (seedY > -2500) {
+        indexCounter++;
+        let landscapeWobble = Math.sin(seedY * 0.015 + levelNum) * 210;
+        let targetX = (canvas.width / 2 - pWidth / 2) + landscapeWobble;
+        
+        if (targetX < 60) targetX = 60;
+        if (targetX + pWidth > canvas.width - 60) targetX = canvas.width - pWidth - 60;
+
+        // CRUMBLING BREAKAWAY PLATFORMS: Active across premium levels 11 to 15
+        let spawnedAsCrumbler = false;
+        if (levelNum >= 11 && indexCounter % 2 === 0) {
+            spawnedAsCrumbler = true;
+        }
+
+        platforms.push(new Platform(targetX, seedY, pWidth, horizontalSpeed, spawnedAsCrumbler));
+
+        if (Math.random() > 0.35) {
+            coins.push(new Coin(targetX + pWidth/2 - 5, seedY - 20));
+        }
+
+        if (Math.random() < 0.14) {
+            rockets.push(new Rocket(targetX + 15, seedY - 24));
+        }
+
+        // Spawn Sparse, Balance-Tuned Bombs
+        if (levelNum > 2 && Math.random() < 0.06) {
+            bombs.push(new Bomb(targetX + pWidth - 22, seedY - 18));
+        }
+
+        // Spawns Procedural, Multi-Shape Obstacles
+        if (levelNum > 1 && Math.random() < 0.22 && !spawnedAsCrumbler) {
+            obstacles.push(new MorphingObstacle(targetX + 25, seedY - 12, 28, indexCounter));
+        }
+
+        seedY -= gapDistance;
+    }
+
+    giantShawarma = new GiantShawarmaTarget(seedY - 60);
+    platforms.push(new Platform(canvas.width / 2 - 75, seedY + 60, 150, 0, false));
+}
+
+// ============================================================================
+// ENVIRONMENT COLLISION & PHYSICS ENGINE RUNNERS
+// ============================================================================
+function verifyPhysicsTick() {
+    if (player.vy >= 0) {
+        for (let p of platforms) {
+            if (!p.dead && player.x + player.width > p.x && player.x < p.x + p.width &&
+                player.y + player.height >= p.y && player.y + player.height <= p.y + p.height + player.vy) {
+                
+                player.y = p.y - player.height; player.vy = 0; player.onGround = true;
+                if (p.speed > 0) player.x += p.speed * p.dir;
+
+                // Fire countdown disintegrations on crumbling platforms
+                if (p.isCrumbling && p.shatterTimer === -1) {
+                    p.shatterTimer = 32; // Gives player exactly ~0.5 seconds to bounce clear!
+                }
+            }
+        }
+    }
+
+    for (let c of coins) {
+        if (!c.collected && player.x < c.x + 14 && player.x + player.width > c.x && player.y < c.y + 14 && player.y + player.height > c.y) {
+            c.collected = true; walletCoins++; Sound.coin();
+            saveAccountStateToDisk(); document.getElementById('hud-coins').innerText = walletCoins;
+        }
+    }
+
+    for (let r of rockets) {
+        if (!r.used && player.x < r.x + r.w && player.x + player.width > r.x && player.y < r.y + r.h && player.y + player.height > r.y) {
+            r.used = true;
+            let thrustForce = shopData.rockets[activeSelections.rockets].val;
+            player.vy = thrustForce; player.onGround = false; Sound.rocket();
+        }
+    }
+
+    for (let b of bombs) {
+        if (player.x < b.x + b.w && player.x + player.width > b.x && player.y < b.y + b.h && player.y + player.height > b.y) {
+            launchSelectedMap(activeLevel); return;
+        }
+    }
+
+    for (let o of obstacles) {
+        if (player.x < o.x + o.width && player.x + player.width > o.x && player.y < o.y + o.height && player.y + player.height > o.y) {
+            triggerCrashedState(); return;
+        }
+    }
+
+    if (player.x < giantShawarma.x + giantShawarma.width && player.x + player.width > giantShawarma.x && player.y < giantShawarma.y + giantShawarma.height && player.y + player.height > giantShawarma.y) {
+        triggerVictoryClearState();
+    }
+}
+
+function triggerCrashedState() {
+    currentGameState = STATE.GAMEOVER; Sound.fail();
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('side-action-tray').classList.add('hidden');
+    document.getElementById('ingame-escape-panel').classList.add('hidden');
+    document.getElementById('gameover-screen').classList.remove('hidden');
+}
+
+function triggerVictoryClearState() {
+    completedLevels[activeLevel] = true; currentGameState = STATE.WIN; Sound.win();
+    saveAccountStateToDisk();
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('side-action-tray').classList.add('hidden');
+    document.getElementById('ingame-escape-panel').classList.add('hidden');
+    document.getElementById('win-screen').classList.remove('hidden');
+}
+
+// ============================================================================
+// DYNAMIC MULTILAYER PROCEDURAL BACKGROUNDS & TICK ENGINE
+// ============================================================================
+function drawMovingBackground() {
+    let baseHue = 240; // Default Deep Cyber Violet Theme
+    
+    // Background hue morphs automatically depending on level progression bracket
+    if (activeLevel >= 6 && activeLevel <= 10) baseHue = 290;       // Cosmic Purple Rift
+    else if (activeLevel >= 11 && activeLevel <= 15) baseHue = 15; // Volcano Shatter Ember Red
+
+    let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGradient.addColorStop(0, `hsl(${baseHue}, 70%, 5%)`);
+    skyGradient.addColorStop(0.5, `hsl(${baseHue + 20}, 50%, 12%)`);
+    skyGradient.addColorStop(1, `hsl(${baseHue + 40}, 60%, 22%)`);
+    ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Parallax Vector Mountain Mist Arrays Renders
+    ctx.fillStyle = `hsla(${baseHue}, 40%, 8%, 0.4)`;
+    for (let i = 0; i < 3; i++) {
+        let parallelSpeed = (currentCameraY * (0.15 + i * 0.1)) % 220;
+        ctx.beginPath();
+        ctx.moveTo(0, canvas.height);
+        ctx.lineTo(0, 240 + i * 40 - parallelSpeed);
+        ctx.lineTo(canvas.width * 0.3, 160 + i * 40 - parallelSpeed);
+        ctx.lineTo(canvas.width * 0.7, 280 + i * 30 - parallelSpeed);
+        ctx.lineTo(canvas.width, 200 + i * 50 - parallelSpeed);
+        ctx.lineTo(canvas.width, canvas.height);
+        ctx.fill();
+    }
+}
+
+function update() {
+    if (currentGameState !== STATE.PLAYING) return;
+    player.update();
+    platforms.forEach(p => p.update());
+
+    let cameraTargetY = player.y - canvas.height / 2;
+    currentCameraY += (cameraTargetY - currentCameraY) * 0.12;
+
+    verifyPhysicsTick();
+
+    if (player.y > 450 && currentCameraY > 80) triggerCrashedState();
+
+    document.getElementById('hud-height').innerText = Math.max(0, Math.floor((400 - player.y) * 0.4));
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawMovingBackground();
+
+    platforms.forEach(p => p.draw());
+    obstacles.forEach(o => o.draw());
+    coins.forEach(c => c.draw());
+    rockets.forEach(r => r.draw());
+    bombs.forEach(b => b.draw());
+    giantShawarma.draw();
+    player.draw();
+}
+
+function processFrameTick() { update(); draw(); requestAnimationFrame(processFrameTick); }
+
+// ============================================================================
+// SYSTEM SHOP MANAGEMENT INTERFACES
+// ============================================================================
+function switchShopTab(tabName) {
+    activeShopTab = tabName;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    renderShopGrid();
+}
+
+function renderShopGrid() {
+    const frame = document.getElementById('shop-items-binder'); frame.innerHTML = '';
+    let itemsPack = shopData[activeShopTab];
+
+    itemsPack.forEach((item, idx) => {
+        const card = document.createElement('div');
+        let chosen = activeSelections[activeShopTab] === idx;
+        card.className = `shop-card ${chosen ? 'selected' : ''}`;
+        
+        let actionsLabel = item.owned ? "EQUIP" : "BUY";
+        if (activeShopTab === 'items') actionsLabel = "BUY ITEM";
+        if (chosen) actionsLabel = "EQUIPPED";
+
+        let visualHook = '';
+        if (activeShopTab === 'chars') visualHook = `<div style="width:24px;height:24px;background:${item.val};margin:8px auto;border-radius:4px;"></div>`;
+        if (activeShopTab === 'clothes') visualHook = `<div style="color:${item.val==='none'?'#fff':item.val}; font-size:0.8rem; margin:10px 0; font-style:italic;">Style: ${item.name.split(' ')[0]}</div>`;
+        if (activeShopTab === 'rockets') visualHook = `<div style="color:#00ffcc; font-size:0.85rem; margin:6px 0;">Force: ${Math.abs(item.val)}m</div>`;
+        if (activeShopTab === 'pets') visualHook = `<div style="color:#ffcc00; font-size:0.85rem; margin:6px 0; font-weight:bold;">✨ ${item.val.toUpperCase()}</div>`;
+        if (activeShopTab === 'items') visualHook = `<div style="color:#ff1744;font-size:0.85rem;margin:6px 0;">Owned: x${item.count}</div>`;
+
+        card.innerHTML = `
+            <h4>${item.name}</h4>
+            ${visualHook}
+            <div class="price-tag">${item.cost > 0 && !item.owned ? '💰 ' + item.cost : 'OWNED'}</div>
+            <button class="btn" style="font-size:0.75rem; padding:4px 10px; margin-top:5px;" onclick="processShopPurchase('${activeShopTab}', ${idx})">${actionsLabel}</button>
+        `;
+        frame.appendChild(card);
+    });
+}
+
+function processShopPurchase(tab, idx) {
+    let target = shopData[tab][idx];
+    if (tab === 'items') { 
+        if (walletCoins >= target.cost) {
+            walletCoins -= target.cost; target.count++; Sound.coin();
+            saveAccountStateToDisk(); updateWalletDisplays(); renderShopGrid();
+        }
+        return;
+    }
+
+    if (!target.owned) {
+        if (walletCoins >= target.cost) {
+            walletCoins -= target.cost; target.owned = true; Sound.coin();
+            activeSelections[tab] = idx;
+        }
+    } else {
+        activeSelections[tab] = idx;
+    }
+    saveAccountStateToDisk(); updateWalletDisplays(); renderShopGrid();
+}
+
+function updateWalletDisplays() {
+    document.getElementById('menu-wallet').innerText = walletCoins;
+    document.getElementById('shop-wallet').innerText = walletCoins;
+    document.getElementById('hud-coins').innerText = walletCoins;
+    document.getElementById('count-pocket-rocket').innerText = `x` + shopData.items[0].count;
+}
+
+function populateMapSelectionMatrix() {
+    const list = document.getElementById('map-buttons-container'); list.innerHTML = '';
+    // EXTENDED PEAK REGISTER RANGE: Generation supporting Levels 1 to 15 completely
+    for (let i = 1; i <= 15; i++) {
+        const btn = document.createElement('button'); let finished = completedLevels[i];
+        let tierStyle = i >= 11 ? 'shatter-tier' : '';
+        btn.className = `lvl-btn ${tierStyle} ${finished ? 'done' : ''}`;
+        btn.innerHTML = `<span>LVL ${i}</span><span class="status-tag">${finished ? 'DONE ✅' : (i >= 11 ? 'CRUMBLE ⚡' : 'CLIMB')}</span>`;
+        btn.onclick = () => launchSelectedMap(i); list.appendChild(btn);
+    }
+}
+
+function launchSelectedMap(levelNumber) {
+    Sound.init(); activeLevel = levelNumber;
+    document.getElementById('hud-level').innerText = levelNumber;
+
+    document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('side-action-tray').classList.remove('hidden');
+    document.getElementById('ingame-escape-panel').classList.remove('hidden');
+
+    player.reset(); generateLevelStructure(levelNumber); updateWalletDisplays();
+    currentGameState = STATE.PLAYING;
+}
+
+function configureInterfaceControls() {
+    // ---- NEW LOGIN LOGIC EVENT LISTENERS ----
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', (e) => {
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+            e.target.classList.add('selected');
+            playerBaseColor = e.target.getAttribute('data-color');
+        });
+    });
+
+    document.getElementById('btn-save-profile').addEventListener('click', () => {
+        let nameInput = document.getElementById('nickname-input').value.trim();
+        if(nameInput === "") {
+            alert("Please enter a nickname first!");
+            return;
+        }
+        playerNickname = nameInput.toUpperCase();
+        shopData.chars[0].val = playerBaseColor;
+        shopData.chars[0].name = `${playerNickname}'s Gear`;
+        
+        saveAccountStateToDisk();
+        
+        document.getElementById('login-screen').classList.add('hidden');
+        document.getElementById('menu-greeting').innerText = `WELCOME, ${playerNickname}!`;
+        document.getElementById('menu-screen').classList.remove('hidden');
+        currentGameState = STATE.MENU;
+    });
+    // ------------------------------------------
+
+    document.getElementById('btn-go-select').addEventListener('click', () => {
+        populateMapSelectionMatrix(); document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('select-screen').classList.remove('hidden');
+    });
+    document.getElementById('btn-select-back').addEventListener('click', () => {
+        document.getElementById('select-screen').classList.add('hidden'); document.getElementById('menu-screen').classList.remove('hidden');
+    });
+    document.getElementById('btn-go-shop').addEventListener('click', () => {
+        updateWalletDisplays(); switchShopTab('chars');
+        document.getElementById('menu-screen').classList.add('hidden'); document.getElementById('shop-screen').classList.remove('hidden');
+    });
+    document.getElementById('btn-shop-back').addEventListener('click', () => {
+        document.getElementById('shop-screen').classList.add('hidden'); document.getElementById('menu-screen').classList.remove('hidden');
+    });
+    document.getElementById('btn-retry').addEventListener('click', () => { launchSelectedMap(activeLevel); });
+    document.getElementById('btn-menu-back').addEventListener('click', () => {
+        document.getElementById('gameover-screen').classList.add('hidden'); populateMapSelectionMatrix(); document.getElementById('select-screen').classList.remove('hidden');
+    });
+    document.getElementById('btn-win-back').addEventListener('click', () => {
+        document.getElementById('win-screen').classList.add('hidden'); populateMapSelectionMatrix(); document.getElementById('select-screen').classList.remove('hidden');
+    });
+    document.getElementById('btn-next-level').addEventListener('click', () => {
+        let nextMap = Math.min(15, activeLevel + 1); launchSelectedMap(nextMap);
+    });
+    document.getElementById('btn-quick-restart').addEventListener('click', () => { launchSelectedMap(activeLevel); });
+    document.getElementById('btn-quick-quit').addEventListener('click', () => {
+        document.getElementById('ingame-escape-panel').classList.add('hidden'); document.getElementById('hud').classList.add('hidden');
+        document.getElementById('side-action-tray').classList.add('hidden');
+        populateMapSelectionMatrix(); currentGameState = STATE.SELECT; document.getElementById('select-screen').classList.remove('hidden');
+    });
+
+    // CRITICAL HOTKEY: Emergency Pocket Rocket Auto Teleport Launcher
+    document.getElementById('btn-use-pocket-rocket').addEventListener('click', () => {
+        let rocketItem = shopData.items[0];
+        if (rocketItem.count > 0 && currentGameState === STATE.PLAYING) {
+            rocketItem.count--; Sound.rocket(); saveAccountStateToDisk();
+            player.y = giantShawarma.y + 45; player.vy = 0; updateWalletDisplays();
+        }
+    });
+
+    window.addEventListener('keydown', (e) => {
+        if(currentGameState === STATE.LOGIN) return; // Prevent jumping while typing name
+        keys[e.code] = true;
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+            if(e.code === 'Space' && e.target === document.body) e.preventDefault();
+            player.jump();
+        }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+}
+
+// Kickstart Initialization Routines 
+function initializeGame() {
+    configureInterfaceControls();
+    generateLevelStructure(1);
+    
+    // Check if player has loaded data
+    let hasData = loadAccountStateFromDisk();
+    
+    if (!hasData || !playerNickname) {
+        // First time playing, go to Login
+        currentGameState = STATE.LOGIN;
+        document.getElementById('login-screen').classList.remove('hidden');
+    } else {
+        // Player already has an account, go straight to Menu
+        currentGameState = STATE.MENU;
+        document.getElementById('menu-greeting').innerText = `WELCOME, ${playerNickname}!`;
+        document.getElementById('menu-screen').classList.remove('hidden');
+    }
+
+    updateWalletDisplays();
+    processFrameTick();
+}
+
+initializeGame();
+</script>
+
+</body>
+</html>
+```
