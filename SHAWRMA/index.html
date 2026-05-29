@@ -1,0 +1,1445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>SHAWARMA MOUNTAIN</title>
+    <style>
+        * { box-sizing: border-box; user-select: none; -webkit-user-select: none; margin: 0; padding: 0; }
+        body, html { width: 100%; height: 100%; overflow: hidden; background-color: #060212; font-family: 'Impact', 'Arial Black', sans-serif; }
+        #game-container {
+            position: relative; width: 100%; height: 100%; max-width: 868px; max-height: 520px;
+            margin: auto; top: 50%; transform: translateY(-50%);
+            box-shadow: 0 0 45px rgba(255, 110, 0, 0.5); overflow: hidden; background: #0f0a21;
+        }
+        canvas { width: 100%; height: 100%; display: block; }
+        .ui-screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            z-index: 10; color: white;
+            text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;
+            padding: 15px; text-align: center; overflow-y: auto;
+        }
+        .hidden { display: none !important; }
+        h1 { font-size: 2.8rem; color: #ffcc00; margin-bottom: 5px; letter-spacing: 1px; }
+        h2 { font-size: 1.4rem; color: #00ffcc; margin-bottom: 10px; }
+        .btn {
+            background: linear-gradient(to bottom, #ff9900, #ff3300); border: 3px solid #fff;
+            border-radius: 12px; color: white; padding: 8px 22px; font-size: 1.1rem;
+            cursor: pointer; margin: 5px; box-shadow: 0 5px 0 #661100; text-transform: uppercase;
+            font-family: 'Impact', sans-serif; letter-spacing: 1px;
+        }
+        .btn:hover { filter: brightness(1.15); }
+        .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #661100; }
+        .wallet-display {
+            background: rgba(0, 0, 0, 0.85); border: 2px solid #ffff00;
+            padding: 6px 16px; border-radius: 20px; color: #ffff00; font-size: 1.2rem; margin-bottom: 10px;
+        }
+        #nickname-input, #friend-link-input, #chat-input-box {
+            background: rgba(0,0,0,0.8); border: 3px solid #00ffcc; color: #ffff00;
+            font-size: 1.3rem; padding: 10px; text-align: center; font-family: 'Impact', sans-serif;
+            text-transform: uppercase; width: 80%; max-width: 320px; outline: none; border-radius: 8px;
+            margin-bottom: 12px; text-shadow: none;
+        }
+        #nickname-input::placeholder, #friend-link-input::placeholder, #chat-input-box::placeholder { color: #555; }
+        .color-swatches { display: flex; gap: 12px; margin-bottom: 20px; }
+        .color-swatch {
+            width: 42px; height: 42px; border-radius: 10px; border: 3px solid #333;
+            cursor: pointer; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); transition: 0.1s;
+        }
+        .color-swatch.selected { border-color: #fff; transform: scale(1.15); box-shadow: 0 0 15px #fff; }
+
+        /* Mode Selection Cards */
+        .mode-grid { display: flex; gap: 14px; margin: 15px 0; flex-wrap: wrap; justify-content: center; }
+        .mode-card {
+            background: rgba(0,0,0,0.9); border: 3px solid #555; border-radius: 14px;
+            padding: 14px 18px; width: 200px; cursor: pointer; transition: 0.2s;
+            text-align: center;
+        }
+        .mode-card:hover { border-color: #00ffcc; transform: scale(1.04); }
+        .mode-card.selected { border-color: #ffcc00; background: rgba(255,200,0,0.1); box-shadow: 0 0 20px rgba(255,200,0,0.3); }
+        .mode-card .mode-icon { font-size: 2.2rem; margin-bottom: 6px; }
+        .mode-card .mode-title { font-size: 1.15rem; color: #ffcc00; margin-bottom: 4px; }
+        .mode-card .mode-desc { font-size: 0.75rem; color: #aaa; text-shadow: none; font-family: Arial, sans-serif; }
+
+        /* Friend Link Section */
+        .friend-section {
+            background: rgba(0,0,0,0.85); border: 2px solid #00ffcc; border-radius: 12px;
+            padding: 12px 18px; margin: 10px 0; width: 90%; max-width: 500px; text-align: center;
+        }
+        .friend-section h3 { color: #00ffcc; font-size: 1.1rem; margin-bottom: 8px; }
+        #friend-link-input { width: 100%; max-width: 100%; font-size: 0.95rem; margin-bottom: 8px; text-transform: none; }
+        .copy-btn {
+            background: #00ffcc; color: #000; border: 2px solid #fff; border-radius: 8px;
+            padding: 5px 16px; font-size: 0.9rem; cursor: pointer; font-weight: bold; font-family: 'Impact', sans-serif;
+        }
+        .copy-btn:active { transform: scale(0.95); }
+
+        /* Chat Panel */
+        #chat-panel {
+            position: absolute; bottom: 10px; left: 10px; width: 260px; z-index: 8;
+            background: rgba(0,0,0,0.88); border: 2px solid #00ffcc; border-radius: 10px;
+            overflow: hidden; display: flex; flex-direction: column;
+        }
+        #chat-panel .chat-header {
+            background: #00ffcc; color: #000; font-weight: bold; padding: 5px 10px;
+            font-size: 0.85rem; display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; font-family: 'Impact', sans-serif;
+        }
+        #chat-messages {
+            height: 120px; overflow-y: auto; padding: 6px 8px; font-size: 0.75rem;
+            color: #ccc; font-family: Arial, sans-serif; text-shadow: none;
+        }
+        #chat-messages .msg { margin-bottom: 4px; line-height: 1.3; }
+        #chat-messages .msg .sender { font-weight: bold; }
+        #chat-messages .msg.system { color: #ffcc00; font-style: italic; }
+        #chat-messages .msg.bot { color: #00ffcc; }
+        .chat-input-row {
+            display: flex; border-top: 1px solid #333;
+        }
+        #chat-input-box {
+            flex: 1; border: none; border-radius: 0; margin: 0; font-size: 0.8rem;
+            padding: 7px 8px; text-transform: none; width: auto; max-width: none; text-align: left;
+        }
+        .chat-send-btn {
+            background: #00ffcc; color: #000; border: none; padding: 7px 12px;
+            font-weight: bold; cursor: pointer; font-size: 0.85rem; font-family: 'Impact', sans-serif;
+        }
+
+        /* Versus HUD */
+        #versus-hud {
+            position: absolute; top: 50px; left: 50%; transform: translateX(-50%);
+            z-index: 7; background: rgba(0,0,0,0.85); border: 2px solid #ff5722;
+            border-radius: 10px; padding: 5px 14px; display: flex; gap: 20px;
+            font-size: 0.85rem; color: #fff;
+        }
+        .vs-player { text-align: center; }
+        .vs-player .vs-name { color: #ffcc00; font-size: 0.75rem; }
+        .vs-player .vs-height { color: #00ffcc; font-size: 1rem; }
+        .vs-divider { color: #ff5722; font-size: 1.2rem; align-self: center; }
+
+        /* Level Grid */
+        .level-grid {
+            display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px;
+            width: 95%; margin: 10px 0; max-height: 200px; overflow-y: auto; padding: 5px;
+        }
+        .lvl-btn {
+            background: linear-gradient(to bottom, #00ffcc, #0099cc); border: 2px solid #fff;
+            border-radius: 8px; color: #000; font-size: 1rem; font-weight: bold;
+            padding: 8px 4px; cursor: pointer; box-shadow: 0 4px 0 #004455;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .lvl-btn .status-tag { font-size: 0.65rem; margin-top: 2px; }
+        .lvl-btn.done { background: linear-gradient(to bottom, #a0ff80, #4caf50) !important; color: white !important; box-shadow: 0 4px 0 #1e5222 !important; }
+        .lvl-btn.shatter-tier { background: linear-gradient(to bottom, #ff5722, #b71c1c); color: white; box-shadow: 0 4px 0 #4a0000; }
+
+        /* Shop */
+        .shop-header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 4px; }
+        .shop-header-row .player-badge {
+            background: rgba(255,255,255,0.1); border: 2px solid #ffcc00; border-radius: 8px;
+            padding: 3px 10px; color: #ffcc00; font-size: 0.9rem;
+        }
+        .shop-tabs { display: flex; gap: 5px; margin-bottom: 8px; max-width: 95%; overflow-x: auto; padding-bottom: 3px; }
+        .tab-btn { background: #241147; border: 2px solid #00ffcc; color: #fff; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.85rem; flex-shrink: 0; font-family: 'Impact', sans-serif; }
+        .tab-btn.active { background: #00ffcc; color: #000; font-weight: bold; }
+        .shop-grid { display: flex; gap: 10px; overflow-x: auto; width: 95%; padding: 10px 5px; min-height: 155px; }
+        .shop-card {
+            background: rgba(0,0,0,0.88); border: 3px solid #00ffcc; border-radius: 10px;
+            padding: 8px; min-width: 125px; text-align: center; flex-shrink: 0;
+        }
+        .shop-card.selected { border-color: #ffff00; background: rgba(255,255,0,0.12); }
+        .shop-card h4 { font-size: 0.9rem; margin-bottom: 4px; }
+        .price-tag { color: #ffff00; font-size: 0.85rem; margin-top: 4px; font-weight: bold; }
+
+        /* HUD */
+        #hud {
+            position: absolute; top: 0; left: 0; width: 100%; padding: 10px;
+            display: flex; justify-content: space-between; pointer-events: none; z-index: 5;
+        }
+        .hud-item { background: rgba(0,0,0,0.75); padding: 5px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.25); color: #fff; font-size: 1rem; }
+        #side-action-tray {
+            position: absolute; top: 75px; right: 10px; z-index: 6;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .power-trigger {
+            background: linear-gradient(to bottom, #ff1744, #b71c1c);
+            border: 2px solid #fff; color: #fff; border-radius: 50%;
+            width: 52px; height: 52px; font-size: 0.65rem; cursor: pointer;
+            box-shadow: 0 4px 0 #4a0000; font-weight: bold;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-family: 'Impact', sans-serif;
+        }
+        .power-trigger:active { transform: translateY(2px); box-shadow: 0 2px 0 #4a0000; }
+        .power-trigger span { font-size: 0.6rem; color: #ffff00; }
+        #ingame-escape-panel {
+            position: absolute; bottom: 10px; right: 10px; z-index: 6; display: flex; gap: 6px;
+        }
+        .esc-btn {
+            background: rgba(0, 0, 0, 0.85); border: 2px solid #fff; color: #fff;
+            border-radius: 6px; padding: 5px 10px; font-size: 0.8rem; cursor: pointer; font-weight: bold;
+            font-family: 'Impact', sans-serif;
+        }
+
+        /* Race finish overlay */
+        #race-result-banner {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            z-index: 9; background: rgba(0,0,0,0.92); border: 3px solid #ffcc00;
+            border-radius: 16px; padding: 20px 30px; text-align: center; color: #fff;
+            font-family: 'Impact', sans-serif; min-width: 280px;
+        }
+        #race-result-banner h2 { color: #ffcc00; font-size: 1.8rem; margin-bottom: 8px; }
+        #race-result-banner p { font-size: 1rem; margin-bottom: 12px; text-shadow: none; font-family: Arial, sans-serif; color: #ccc; }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-thumb { background: #00ffcc; border-radius: 3px; }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+        <div style="display: flex; gap: 5px;">
+            <div class="hud-item" style="color: #ffff00;">🏔️ Level <span id="hud-level">1</span></div>
+            <div class="hud-item" style="color: #00ffcc;">💰 <span id="hud-coins">0</span></div>
+        </div>
+        <div class="hud-item">🌯 <span id="hud-height">0</span>m</div>
+    </div>
+
+    <!-- Versus HUD (Friend/Bot Race) -->
+    <div id="versus-hud" class="hidden">
+        <div class="vs-player">
+            <div class="vs-name" id="vs-you-name">YOU</div>
+            <div class="vs-height" id="vs-you-height">0m</div>
+        </div>
+        <div class="vs-divider">⚔️ VS</div>
+        <div class="vs-player">
+            <div class="vs-name" id="vs-opp-name">OPPONENT</div>
+            <div class="vs-height" id="vs-opp-height">0m</div>
+        </div>
+    </div>
+
+    <!-- Pocket Rocket Button -->
+    <div id="side-action-tray" class="hidden">
+        <button class="power-trigger" id="btn-use-pocket-rocket">🚀<br>USE<br><span id="count-pocket-rocket">x0</span></button>
+    </div>
+
+    <!-- In-game buttons -->
+    <div id="ingame-escape-panel" class="hidden">
+        <button class="esc-btn" id="btn-quick-restart">🔄 RETRY</button>
+        <button class="esc-btn" id="btn-quick-quit">🚪 QUIT</button>
+    </div>
+
+    <!-- Chat Panel -->
+    <div id="chat-panel" class="hidden">
+        <div class="chat-header" id="chat-toggle">
+            💬 CHAT <span id="chat-collapse-icon">▼</span>
+        </div>
+        <div id="chat-body">
+            <div id="chat-messages"></div>
+            <div class="chat-input-row">
+                <input type="text" id="chat-input-box" placeholder="Type a message..." maxlength="100" autocomplete="off" />
+                <button class="chat-send-btn" id="chat-send">SEND</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Race Result Banner -->
+    <div id="race-result-banner" class="hidden">
+        <h2 id="race-result-title">🏆 YOU WIN!</h2>
+        <p id="race-result-desc">You reached the top first!</p>
+        <button class="btn" id="btn-race-continue">CONTINUE</button>
+    </div>
+
+    <!-- ========== SCREEN: LOGIN ========== -->
+    <div id="login-screen" class="ui-screen hidden" style="background: rgba(10,5,30,0.98);">
+        <h1 style="font-size: 2.5rem; margin-bottom: 15px;">🌯 CREATE YOUR CLIMBER</h1>
+
+        <p style="font-size: 1rem; color: #aaa; margin-bottom: 12px; text-shadow: none; font-family: Arial, sans-serif;">Pick a name and color to get started</p>
+
+        <input type="text" id="nickname-input" placeholder="YOUR NAME" maxlength="12" autocomplete="off" />
+
+        <p style="font-size: 0.9rem; color: #ccc; margin-bottom: 8px; text-shadow: none; font-family: Arial, sans-serif;">Choose your character color:</p>
+        <div class="color-swatches" id="color-picker">
+            <div class="color-swatch selected" data-color="#ff5722" style="background: #ff5722;"></div>
+            <div class="color-swatch" data-color="#4caf50" style="background: #4caf50;"></div>
+            <div class="color-swatch" data-color="#2196f3" style="background: #2196f3;"></div>
+            <div class="color-swatch" data-color="#e91e63" style="background: #e91e63;"></div>
+            <div class="color-swatch" data-color="#ffffff" style="background: #ffffff;"></div>
+        </div>
+
+        <button class="btn" id="btn-save-profile" style="background: linear-gradient(to bottom, #00ffcc, #009999); color: #000; border-color: #fff; font-size: 1.3rem;">START PLAYING →</button>
+    </div>
+
+    <!-- ========== SCREEN: MODE SELECT ========== -->
+    <div id="mode-screen" class="ui-screen hidden" style="background: rgba(10,5,30,0.98);">
+        <h1 style="font-size: 2.2rem; margin-bottom: 4px;">🌯 SHAWARMA MOUNTAIN</h1>
+        <div id="mode-greeting" style="font-size: 1.1rem; color: #00ffcc; margin-bottom: 5px; font-weight: bold;"></div>
+        <div class="wallet-display" style="font-size:1rem; padding:4px 12px;">💰 <span id="mode-wallet">0</span> Coins</div>
+
+        <p style="font-size: 1rem; color: #fff; margin-bottom: 10px;">How do you want to play?</p>
+
+        <div class="mode-grid">
+            <div class="mode-card" id="mode-solo" onclick="selectMode('solo')">
+                <div class="mode-icon">🧗</div>
+                <div class="mode-title">SOLO CLIMB</div>
+                <div class="mode-desc">Play alone. Reach the shawarma at the top to clear each level.</div>
+            </div>
+            <div class="mode-card" id="mode-bot" onclick="selectMode('bot')">
+                <div class="mode-icon">🤖</div>
+                <div class="mode-title">VS CHATBOT</div>
+                <div class="mode-desc">Race against an AI bot. First to the top wins! Chat with the bot while climbing.</div>
+            </div>
+            <div class="mode-card" id="mode-friend" onclick="selectMode('friend')">
+                <div class="mode-icon">👥</div>
+                <div class="mode-title">VS FRIEND</div>
+                <div class="mode-desc">Share a link with a friend. Race to the top — first one there wins!</div>
+            </div>
+        </div>
+
+        <!-- Friend link section (shown when friend mode selected) -->
+        <div class="friend-section hidden" id="friend-link-section">
+            <h3>📎 Share This Link With Your Friend</h3>
+            <p style="font-size:0.75rem; color:#aaa; margin-bottom:8px; text-shadow:none; font-family:Arial,sans-serif;">Both players open the same link and race at the same time!</p>
+            <input type="text" id="friend-link-input" readonly />
+            <div style="display:flex; gap:8px; justify-content:center;">
+                <button class="copy-btn" id="btn-copy-link">📋 COPY LINK</button>
+                <button class="copy-btn" id="btn-new-room" style="background:#ff9900;">🔄 NEW ROOM</button>
+            </div>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:12px; flex-wrap: wrap; justify-content:center;">
+            <button class="btn" id="btn-mode-play" style="font-size:1.2rem;">▶ PLAY NOW</button>
+            <button class="btn" id="btn-mode-shop" style="background: #1b113a; border-color: #ffff00; font-size: 0.95rem;">🛒 SHOP</button>
+        </div>
+    </div>
+
+    <!-- ========== SCREEN: MENU (kept as fallback / redirects to mode) ========== -->
+    <div id="menu-screen" class="ui-screen hidden">
+        <h1>SHAWARMA MOUNTAIN</h1>
+        <div id="menu-greeting" style="font-size: 1.3rem; color: #00ffcc; margin-bottom: 8px; font-weight: bold;"></div>
+        <h2>CLIMB TO THE TOP!</h2>
+        <div class="wallet-display">💰 <span id="menu-wallet">0</span> Coins</div>
+        <button class="btn" id="btn-go-select">SELECT LEVEL</button>
+        <button class="btn" id="btn-go-shop" style="background: #1b113a; border-color: #ffff00;">🛒 UPGRADE SHOP</button>
+    </div>
+
+    <!-- ========== SCREEN: SHOP ========== -->
+    <div id="shop-screen" class="ui-screen hidden" style="background: rgba(10, 5, 22, 0.99);">
+        <div class="shop-header-row">
+            <h2 style="color: #ffff00; font-size: 1.6rem; margin: 0;">🛒 SHOP</h2>
+            <div class="player-badge" id="shop-player-badge">👤 PLAYER</div>
+        </div>
+        <div class="wallet-display" style="font-size:1rem; padding:3px 12px;">💰 <span id="shop-wallet">0</span> Coins</div>
+
+        <div class="shop-tabs">
+            <button class="tab-btn active" id="tab-chars" onclick="switchShopTab('chars')">SKINS</button>
+            <button class="tab-btn" id="tab-clothes" onclick="switchShopTab('clothes')">OUTFITS</button>
+            <button class="tab-btn" id="tab-rockets" onclick="switchShopTab('rockets')">ROCKETS</button>
+            <button class="tab-btn" id="tab-pets" onclick="switchShopTab('pets')">PETS</button>
+            <button class="tab-btn" id="tab-items" onclick="switchShopTab('items')">ITEMS</button>
+        </div>
+
+        <div class="shop-grid" id="shop-items-binder"></div>
+
+        <button class="btn" id="btn-shop-back" style="background:#333; font-size: 0.95rem; padding: 4px 14px;">← BACK</button>
+    </div>
+
+    <!-- ========== SCREEN: LEVEL SELECT ========== -->
+    <div id="select-screen" class="ui-screen hidden" style="background: rgba(13,6,28,0.97);">
+        <h2 style="color: #ffcc00; font-size: 1.8rem; margin-bottom: 4px;">SELECT LEVEL</h2>
+        <p style="font-size:0.8rem; color:#aaa; text-shadow:none; font-family:Arial,sans-serif; margin-bottom:6px;" id="select-mode-label">Mode: Solo</p>
+        <div class="level-grid" id="map-buttons-container"></div>
+        <button class="btn" id="btn-select-back" style="background: #333; font-size:0.95rem;">← BACK</button>
+    </div>
+
+    <!-- ========== SCREEN: GAME OVER ========== -->
+    <div id="gameover-screen" class="ui-screen hidden" style="background: rgba(200,10,40,0.4);">
+        <h1 style="color: #ff3333; font-size: 3rem;">💥 CRASHED!</h1>
+        <p style="font-size:1rem; color:#ffcccc; margin-bottom:10px;">You hit an obstacle. Try again!</p>
+        <button class="btn" id="btn-retry">🔄 RETRY</button>
+        <button class="btn" id="btn-menu-back" style="background: #222;">📋 LEVEL SELECT</button>
+    </div>
+
+    <!-- ========== SCREEN: WIN ========== -->
+    <div id="win-screen" class="ui-screen hidden" style="background: rgba(0,220,120,0.4);">
+        <h1 style="color: #00ffcc; font-size: 3rem;">🎉 LEVEL CLEARED!</h1>
+        <p style="font-size: 1.2rem; color: #fff000; margin-bottom: 15px;">You reached the Shawarma!</p>
+        <button class="btn" id="btn-next-level" style="background: linear-gradient(to bottom, #00ff66, #009933); box-shadow: 0 5px 0 #003311;">NEXT LEVEL →</button>
+        <button class="btn" id="btn-win-back" style="background: #222;">📋 LEVEL SELECT</button>
+    </div>
+
+    <!-- Canvas -->
+    <canvas id="gameCanvas"></canvas>
+</div>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+canvas.width = 868;
+canvas.height = 480;
+
+const STATE = { LOGIN: -1, MODE: -2, MENU: 0, SELECT: 1, PLAYING: 2, GAMEOVER: 3, WIN: 4, SHOP: 5 };
+let currentGameState = STATE.MODE;
+
+let activeLevel = 1;
+let currentCameraY = 0;
+let keys = {};
+
+let playerNickname = "";
+let playerBaseColor = "#ff5722";
+let walletCoins = 200;
+let completedLevels = {};
+let activeShopTab = 'chars';
+
+// Game mode: 'solo', 'bot', 'friend'
+let gameMode = 'solo';
+let roomId = '';
+
+let platforms = [];
+let obstacles = [];
+let coins = [];
+let rockets = [];
+let bombs = [];
+let giantShawarma = null;
+
+// Bot / Friend opponent state
+let opponentHeight = 0;
+let opponentSpeed = 0;
+let opponentFinished = false;
+let playerFinished = false;
+let raceActive = false;
+let raceStartTime = 0;
+
+// Chat state
+let chatMessages = [];
+let chatMinimized = false;
+
+// Bot personality responses
+const botResponses = {
+    greetings: ["Hey! Ready to race? 🏃", "Let's goooo! 🚀", "I'm gonna beat you to the top!", "May the best climber win!"],
+    taunts: ["I'm ahead of you! 😎", "Catch me if you can!", "Too slow!", "Is that all you got?", "I can see the top from here!"],
+    encouragement: ["Nice move!", "You're catching up!", "Good jump!", "Keep going!"],
+    losing: ["Nooo you're fast!", "Wait up!", "I'm slipping!", "Okay okay you're good..."],
+    playerWin: ["GG! You won fair and square 🏆", "Well played! Rematch?", "You're too good!"],
+    botWin: ["Haha I won! Better luck next time!", "The mountain is mine! 🌯", "Victory is sweet!"],
+    reactions: ["Lol 😂", "Haha nice", "Interesting strategy...", "That's one way to do it", "🌯🌯🌯"]
+};
+
+// Peer connection for friend mode
+let peerChannel = null;
+let friendPeerData = { height: 0, finished: false, name: 'FRIEND' };
+
+// Shop data
+let shopData = {
+    chars: [
+        { id: 'base', name: 'Default', cost: 0, val: '#ff5722', owned: true },
+        { id: 'ninja', name: 'Cyber Ninja', cost: 35, val: '#9c27b0', owned: false },
+        { id: 'chef', name: 'Cosmic Chef', cost: 75, val: '#00bcd4', owned: false },
+        { id: 'gold', name: 'Gold Bot', cost: 140, val: '#ffeb3b', owned: false }
+    ],
+    clothes: [
+        { id: 'naked', name: 'No Outfit', cost: 0, val: 'none', owned: true },
+        { id: 'cape', name: 'Red Cape', cost: 30, val: '#d50000', owned: false },
+        { id: 'chain', name: 'Gold Chain', cost: 60, val: '#ffd700', owned: false },
+        { id: 'cyber', name: 'Neon Vest', cost: 100, val: '#00ffcc', owned: false }
+    ],
+    rockets: [
+        { id: 'std', name: 'Basic Rocket', cost: 0, val: -21, owned: true },
+        { id: 'fire', name: 'Super Fire', cost: 45, val: -26, owned: false },
+        { id: 'plasma', name: 'Plasma Blast', cost: 95, val: -32, owned: false }
+    ],
+    pets: [
+        { id: 'none', name: 'No Pet', cost: 0, val: 'none', owned: true },
+        { id: 'cat', name: 'Cat', cost: 40, val: 'cat', owned: false },
+        { id: 'dog', name: 'Dog', cost: 50, val: 'dog', owned: false },
+        { id: 'turtle', name: 'Turtle', cost: 70, val: 'turtle', owned: false },
+        { id: 'bird', name: 'Bird', cost: 90, val: 'bird', owned: false }
+    ],
+    items: [
+        { id: 'pkt_rkt', name: 'Pocket Rocket', cost: 20, val: 'utility', count: 1 }
+    ]
+};
+let activeSelections = { chars: 0, clothes: 0, rockets: 0, pets: 0 };
+
+// ============ LOCAL STORAGE ============
+function saveAccountStateToDisk() {
+    const data = {
+        playerNickname, playerBaseColor, walletCoins, completedLevels, activeSelections,
+        unlockedChars: shopData.chars.map(c => c.owned),
+        unlockedClothes: shopData.clothes.map(c => c.owned),
+        unlockedRockets: shopData.rockets.map(r => r.owned),
+        unlockedPets: shopData.pets.map(p => p.owned),
+        pocketRocketItemCount: shopData.items[0].count
+    };
+    localStorage.setItem('SHAWARMA_MOUNTAIN_SAVE', JSON.stringify(data));
+}
+
+function loadAccountStateFromDisk() {
+    try {
+        const raw = localStorage.getItem('SHAWARMA_MOUNTAIN_SAVE');
+        if (!raw) return false;
+        const d = JSON.parse(raw);
+        playerNickname = d.playerNickname || "";
+        playerBaseColor = d.playerBaseColor || "#ff5722";
+        walletCoins = d.walletCoins ?? 200;
+        completedLevels = d.completedLevels ?? {};
+        activeSelections = d.activeSelections ?? { chars: 0, clothes: 0, rockets: 0, pets: 0 };
+        if(d.unlockedChars) d.unlockedChars.forEach((o, i) => { if(shopData.chars[i]) shopData.chars[i].owned = o; });
+        if(d.unlockedClothes) d.unlockedClothes.forEach((o, i) => { if(shopData.clothes[i]) shopData.clothes[i].owned = o; });
+        if(d.unlockedRockets) d.unlockedRockets.forEach((o, i) => { if(shopData.rockets[i]) shopData.rockets[i].owned = o; });
+        if(d.unlockedPets) d.unlockedPets.forEach((o, i) => { if(shopData.pets[i]) shopData.pets[i].owned = o; });
+        if(d.pocketRocketItemCount !== undefined) shopData.items[0].count = d.pocketRocketItemCount;
+        shopData.chars[0].val = playerBaseColor;
+        shopData.chars[0].name = playerNickname ? `${playerNickname}'s Skin` : 'Default';
+        return true;
+    } catch(e) { return false; }
+}
+
+// ============ SOUND ============
+const Sound = {
+    ctx: null,
+    init() { if(!this.ctx) this.ctx = new(window.AudioContext || window.webkitAudioContext)(); },
+    play(freq, type, dur, vol=0.08) {
+        if(!this.ctx) return;
+        let o = this.ctx.createOscillator(); let g = this.ctx.createGain();
+        o.type = type; o.frequency.setValueAtTime(freq, this.ctx.currentTime);
+        g.gain.setValueAtTime(vol, this.ctx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + dur);
+        o.connect(g); g.connect(this.ctx.destination); o.start(); o.stop(this.ctx.currentTime + dur);
+    },
+    jump() { this.play(360, 'square', 0.07); },
+    coin() { this.play(1050, 'sine', 0.06); setTimeout(()=>this.play(1400, 'sine', 0.09), 30); },
+    rocket() { this.play(130, 'sawtooth', 0.45); setTimeout(()=>this.play(750, 'sine', 0.25), 60); },
+    win() { this.play(530, 'sine', 0.08); setTimeout(()=>this.play(800, 'sine', 0.2), 70); },
+    fail() { this.play(85, 'sawtooth', 0.3, 0.15); },
+    shatter() { this.play(190, 'triangle', 0.15, 0.2); },
+    chat() { this.play(800, 'sine', 0.04, 0.04); }
+};
+
+// ============ CHAT SYSTEM ============
+function addChatMessage(sender, text, type = 'normal') {
+    chatMessages.push({ sender, text, type, time: Date.now() });
+    if (chatMessages.length > 50) chatMessages.shift();
+    renderChatMessages();
+}
+
+function renderChatMessages() {
+    const container = document.getElementById('chat-messages');
+    container.innerHTML = chatMessages.map(m => {
+        let cls = m.type === 'system' ? 'system' : (m.type === 'bot' ? 'bot' : '');
+        let senderColor = m.type === 'bot' ? '#00ffcc' : (m.type === 'system' ? '#ffcc00' : '#ff9900');
+        return `<div class="msg ${cls}"><span class="sender" style="color:${senderColor}">${m.sender}:</span> ${m.text}</div>`;
+    }).join('');
+    container.scrollTop = container.scrollHeight;
+}
+
+function sendChatMessage() {
+    const input = document.getElementById('chat-input-box');
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = '';
+    
+    addChatMessage(playerNickname || 'YOU', text, 'normal');
+    Sound.chat();
+
+    if (gameMode === 'bot') {
+        // Bot responds after a short delay
+        setTimeout(() => {
+            let response = getBotResponse(text);
+            addChatMessage('🤖 BOT', response, 'bot');
+            Sound.chat();
+        }, 600 + Math.random() * 1200);
+    }
+
+    // In friend mode, broadcast via BroadcastChannel
+    if (gameMode === 'friend' && peerChannel) {
+        peerChannel.postMessage({ type: 'chat', sender: playerNickname || 'PLAYER', text: text });
+    }
+}
+
+function getBotResponse(playerMsg) {
+    let msg = playerMsg.toLowerCase();
+    if (msg.includes('hi') || msg.includes('hello') || msg.includes('hey')) {
+        return pickRandom(botResponses.greetings);
+    }
+    if (msg.includes('win') || msg.includes('won') || msg.includes('first')) {
+        return pickRandom(botResponses.taunts);
+    }
+    if (msg.includes('help') || msg.includes('hard') || msg.includes('stuck')) {
+        return pickRandom(botResponses.encouragement);
+    }
+    if (msg.includes('lol') || msg.includes('haha') || msg.includes('funny')) {
+        return pickRandom(botResponses.reactions);
+    }
+    if (msg.includes('slow') || msg.includes('lose') || msg.includes('bad')) {
+        return pickRandom(botResponses.losing);
+    }
+    // Default random response
+    let all = [...botResponses.taunts, ...botResponses.encouragement, ...botResponses.reactions];
+    return pickRandom(all);
+}
+
+function pickRandom(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+// Bot periodic taunting during race
+let botTauntInterval = null;
+function startBotTaunting() {
+    if (botTauntInterval) clearInterval(botTauntInterval);
+    botTauntInterval = setInterval(() => {
+        if (currentGameState !== STATE.PLAYING || gameMode !== 'bot') {
+            clearInterval(botTauntInterval);
+            return;
+        }
+        let playerH = Math.max(0, Math.floor((400 - player.y) * 0.4));
+        let botH = opponentHeight;
+        
+        if (botH > playerH + 30) {
+            addChatMessage('🤖 BOT', pickRandom(botResponses.taunts), 'bot');
+        } else if (playerH > botH + 30) {
+            addChatMessage('🤖 BOT', pickRandom(botResponses.losing), 'bot');
+        } else {
+            addChatMessage('🤖 BOT', pickRandom(botResponses.encouragement), 'bot');
+        }
+    }, 5000 + Math.random() * 4000);
+}
+
+// ============ FRIEND MODE (BroadcastChannel) ============
+function generateRoomId() {
+    return 'SM-' + Math.random().toString(36).substr(2, 6).toUpperCase();
+}
+
+function setupFriendMode() {
+    // Check URL for room param
+    let params = new URLSearchParams(window.location.search);
+    let existingRoom = params.get('room');
+    if (existingRoom) {
+        roomId = existingRoom;
+    } else {
+        roomId = generateRoomId();
+    }
+    updateFriendLink();
+    setupBroadcastChannel();
+}
+
+function updateFriendLink() {
+    let baseUrl = window.location.origin + window.location.pathname;
+    let link = baseUrl + '?room=' + roomId;
+    document.getElementById('friend-link-input').value = link;
+}
+
+function setupBroadcastChannel() {
+    if (peerChannel) { peerChannel.close(); }
+    try {
+        peerChannel = new BroadcastChannel('shawarma-' + roomId);
+        peerChannel.onmessage = (e) => {
+            let data = e.data;
+            if (data.type === 'chat') {
+                addChatMessage('👤 ' + data.sender, data.text, 'normal');
+                Sound.chat();
+            }
+            if (data.type === 'height') {
+                friendPeerData.height = data.height;
+                friendPeerData.name = data.name || 'FRIEND';
+                friendPeerData.finished = data.finished || false;
+            }
+            if (data.type === 'join') {
+                addChatMessage('SYSTEM', data.name + ' joined the room!', 'system');
+            }
+            if (data.type === 'race-finish') {
+                if (!playerFinished && !opponentFinished) {
+                    opponentFinished = true;
+                    showRaceResult(false, data.name);
+                }
+            }
+        };
+        // Announce join
+        peerChannel.postMessage({ type: 'join', name: playerNickname || 'PLAYER' });
+    } catch(e) {
+        console.log('BroadcastChannel not supported, friend mode will be simulated');
+    }
+}
+
+function broadcastMyState() {
+    if (gameMode !== 'friend' || !peerChannel) return;
+    let h = Math.max(0, Math.floor((400 - player.y) * 0.4));
+    peerChannel.postMessage({ type: 'height', height: h, name: playerNickname, finished: playerFinished });
+}
+
+// ============ RACE RESULT ============
+function showRaceResult(youWon, opponentName) {
+    raceActive = false;
+    let banner = document.getElementById('race-result-banner');
+    let title = document.getElementById('race-result-title');
+    let desc = document.getElementById('race-result-desc');
+
+    if (youWon) {
+        title.innerHTML = '🏆 YOU WIN!';
+        title.style.color = '#00ffcc';
+        desc.textContent = 'You reached the top first! Congratulations!';
+        Sound.win();
+        if (gameMode === 'bot') {
+            setTimeout(() => addChatMessage('🤖 BOT', pickRandom(botResponses.playerWin), 'bot'), 500);
+        }
+    } else {
+        title.innerHTML = '😢 YOU LOST!';
+        title.style.color = '#ff5555';
+        desc.textContent = (opponentName || 'Opponent') + ' reached the top first!';
+        Sound.fail();
+        if (gameMode === 'bot') {
+            setTimeout(() => addChatMessage('🤖 BOT', pickRandom(botResponses.botWin), 'bot'), 500);
+        }
+    }
+    banner.classList.remove('hidden');
+}
+
+// ============ CHARACTER ============
+class Character {
+    constructor() {
+        this.x = 400; this.y = 400; this.width = 28; this.height = 42;
+        this.vx = 0; this.vy = 0; this.speed = 5.6; this.jumpPower = -11.5; this.gravity = 0.52;
+        this.onGround = false; this.trail = [];
+    }
+    reset() { this.x = 400; this.y = 400; this.vx = 0; this.vy = 0; this.onGround = false; this.trail = []; }
+    update() {
+        if (keys['ArrowLeft'] || keys['KeyA']) this.vx = -this.speed;
+        else if (keys['ArrowRight'] || keys['KeyD']) this.vx = this.speed;
+        else this.vx *= 0.76;
+        this.vy += this.gravity; this.x += this.vx; this.y += this.vy;
+        if (this.x < 0) this.x = 0;
+        if (this.x + this.width > canvas.width) this.x = canvas.width - this.width;
+        if (this.y > 420) { this.y = 420; this.vy = 0; this.onGround = true; }
+        this.trail.push({ x: this.x, y: this.y });
+        if (this.trail.length > 14) this.trail.shift();
+    }
+    jump() { if (this.onGround) { this.vy = this.jumpPower; this.onGround = false; Sound.jump(); } }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        let clothesType = shopData.clothes[activeSelections.clothes].id;
+        if (clothesType === 'cape') {
+            ctx.fillStyle = '#d50000';
+            ctx.beginPath(); ctx.moveTo(-4, 18); ctx.lineTo(6, 14); ctx.lineTo(4, 42); ctx.lineTo(-8, 38); ctx.fill();
+        }
+        ctx.fillStyle = shopData.chars[activeSelections.chars].val;
+        ctx.fillRect(0, 12, this.width, this.height - 12);
+        if (clothesType === 'cyber') {
+            ctx.fillStyle = '#00ffcc'; ctx.fillRect(2, 18, this.width - 4, 14);
+            ctx.fillStyle = '#111'; ctx.fillRect(8, 20, 12, 4);
+        } else if (clothesType === 'chain') {
+            ctx.strokeStyle = '#ffd700'; ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(this.width/2, 16, 6, 0, Math.PI); ctx.stroke();
+        }
+        ctx.fillStyle = '#ffebd6'; ctx.fillRect(2, 0, this.width - 4, 14);
+        ctx.fillStyle = '#000'; ctx.fillRect(5, 4, 3, 4); ctx.fillRect(16, 4, 3, 4);
+        ctx.restore();
+
+        // Pet
+        let activePet = shopData.pets[activeSelections.pets];
+        if (activePet && activePet.id !== 'none' && this.trail.length > 0) {
+            let petPos = this.trail[0];
+            let bounceY = Math.sin(Date.now() / 130) * 5;
+            ctx.save(); ctx.translate(petPos.x - 16, petPos.y - 10 - currentCameraY + bounceY);
+            if (activePet.id === 'cat') {
+                ctx.fillStyle = '#ffb300'; ctx.beginPath(); ctx.arc(8, 8, 8, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(1,2); ctx.lineTo(5,8); ctx.lineTo(1,8); ctx.fill();
+                ctx.beginPath(); ctx.moveTo(15,2); ctx.lineTo(11,8); ctx.lineTo(15,8); ctx.fill();
+                ctx.fillStyle = '#000'; ctx.fillRect(4,6,2,2); ctx.fillRect(10,6,2,2);
+            } else if (activePet.id === 'dog') {
+                ctx.fillStyle = '#8d6e63'; ctx.fillRect(0, 4, 16, 12);
+                ctx.fillStyle = '#4e342e'; ctx.fillRect(-2, 4, 4, 8); ctx.fillRect(14, 4, 4, 8);
+                ctx.fillStyle = '#000'; ctx.fillRect(4, 6, 2, 2); ctx.fillRect(10, 6, 2, 2);
+            } else if (activePet.id === 'turtle') {
+                ctx.fillStyle = '#2e7d32'; ctx.beginPath(); ctx.arc(8, 8, 9, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#81c784'; ctx.beginPath(); ctx.arc(15, 8, 4, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#000'; ctx.fillRect(14, 6, 1, 2);
+            } else if (activePet.id === 'bird') {
+                ctx.fillStyle = '#29b6f6'; ctx.beginPath(); ctx.arc(8, 6, 7, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#ffb300'; ctx.beginPath(); ctx.moveTo(14, 5); ctx.lineTo(19, 7); ctx.lineTo(14, 9); ctx.fill();
+                let wingFlap = Math.sin(Date.now() / 60) > 0 ? 0 : 6;
+                ctx.fillStyle= '#0288d1'; ctx.fillRect(3, 4 + wingFlap, 6, 4);
+            }
+            ctx.restore();
+        }
+    }
+}
+const player = new Character();
+
+// ============ LEVEL ENTITIES ============
+class Platform {
+    constructor(x, y, width, speed = 0, isCrumbling = false) {
+        this.x = x; this.y = y; this.width = width; this.height = 16;
+        this.speed = speed; this.dir = 1; this.isCrumbling = isCrumbling;
+        this.shatterTimer = -1; this.dead = false;
+    }
+    update() {
+        if (this.dead) return;
+        if (this.speed > 0) {
+            this.x += this.speed * this.dir;
+            if (this.x < 30 || this.x + this.width > canvas.width - 30) this.dir *= -1;
+        }
+        if (this.shatterTimer > 0) { this.shatterTimer--; if (this.shatterTimer === 0) { this.dead = true; Sound.shatter(); } }
+    }
+    draw() {
+        if (this.dead) return;
+        if (this.isCrumbling) {
+            ctx.fillStyle = (this.shatterTimer > 0 && Math.floor(this.shatterTimer / 4) % 2 === 0) ? '#ff3300' : '#ff9800';
+            ctx.fillRect(this.x, this.y - currentCameraY, this.width, this.height);
+            ctx.fillStyle = '#ffb74d'; ctx.fillRect(this.x, this.y - currentCameraY, this.width, 4);
+            ctx.strokeStyle = '#5d4037'; ctx.lineWidth = 1.5;
+            ctx.beginPath(); ctx.moveTo(this.x + 20, this.y - currentCameraY); ctx.lineTo(this.x + 35, this.y + 12 - currentCameraY); ctx.stroke();
+        } else {
+            ctx.fillStyle = '#4caf50'; ctx.fillRect(this.x, this.y - currentCameraY, this.width, this.height);
+            ctx.fillStyle = '#8bc34a'; ctx.fillRect(this.x, this.y - currentCameraY, this.width, 4);
+        }
+    }
+}
+
+class MorphingObstacle {
+    constructor(x, y, width, variationSeed) {
+        this.x = x; this.y = y; this.width = width; this.height = 14;
+        this.type = variationSeed % 3;
+    }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        if (this.type === 0) {
+            ctx.fillStyle = '#ff1744';
+            for (let i = 0; i < this.width; i += 14) {
+                ctx.beginPath(); ctx.moveTo(i, this.height); ctx.lineTo(i + 7, 0); ctx.lineTo(i + 14, this.height); ctx.fill();
+            }
+        } else if (this.type === 1) {
+            ctx.strokeStyle = '#b0bec5'; ctx.lineWidth = 3; ctx.strokeRect(0, 4, this.width, 6);
+            ctx.fillStyle = '#cfd8dc';
+            for (let i = 4; i < this.width; i += 16) {
+                ctx.beginPath(); ctx.arc(i, 2, 4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(i, 12, 4, 0, Math.PI*2); ctx.fill();
+            }
+        } else {
+            ctx.fillStyle = '#78909c';
+            let spinPhase = (Date.now() / 4) % 360;
+            for (let i = 0; i < this.width; i += 20) {
+                ctx.save(); ctx.translate(i + 10, 7); ctx.rotate(spinPhase * Math.PI / 180);
+                ctx.beginPath(); ctx.arc(0, 0, 8, 0, Math.PI*2); ctx.fill();
+                ctx.fillStyle = '#d32f2f';
+                for(let r=0; r<8; r++) { ctx.rotate(Math.PI/4); ctx.fillRect(6, -2, 4, 4); }
+                ctx.restore();
+            }
+        }
+        ctx.restore();
+    }
+}
+
+class Coin {
+    constructor(x, y) { this.x = x; this.y = y; this.collected = false; }
+    draw() {
+        if (this.collected) return;
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        ctx.fillStyle = '#ffeb3b'; ctx.strokeStyle = '#f57f17'; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(7, 7, 7, 0, Math.PI*2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+    }
+}
+
+class Rocket {
+    constructor(x, y) { this.x = x; this.y = y; this.w = 16; this.h = 24; this.used = false; }
+    draw() {
+        if (this.used) return;
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY);
+        ctx.fillStyle = '#2196f3'; ctx.fillRect(0, 6, this.w, this.h - 6);
+        ctx.fillStyle = '#ff1744'; ctx.beginPath(); ctx.moveTo(0,6); ctx.lineTo(this.w/2, 0); ctx.lineTo(this.w, 6); ctx.fill();
+        ctx.restore();
+    }
+}
+
+class Bomb {
+    constructor(x, y) { this.x = x; this.y = y; this.w = 18; this.h = 18; }
+    draw() {
+        ctx.save(); ctx.translate(this.x, this.y - currentCameraY); ctx.fillStyle = '#111';
+        ctx.beginPath(); ctx.arc(9, 9, 9, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ff9800'; ctx.fillRect(8, -2, 2, 4);
+        ctx.restore();
+    }
+}
+
+class GiantShawarmaTarget {
+    constructor(y) { this.x = canvas.width / 2 - 45; this.y = y; this.width = 90; this.height = 110; }
+    draw() {
+        ctx.save(); ctx.translate(this.x + 45, this.y + 55 - currentCameraY);
+        let scale = 1 + Math.sin(Date.now() / 100) * 0.05; ctx.scale(scale, scale);
+        ctx.fillStyle = '#fffdf0'; ctx.fillRect(-40, -45, 80, 85);
+        ctx.strokeStyle = '#ffcc00'; ctx.lineWidth = 3; ctx.strokeRect(-40, -45, 80, 85);
+        ctx.fillStyle = '#5d4037'; ctx.fillRect(-35, -58, 70, 14);
+        ctx.fillStyle = '#000'; ctx.font = 'bold 14px Impact, sans-serif'; ctx.textAlign = 'center';
+        ctx.fillText("🌯 GOAL!", 0, 10);
+        ctx.restore();
+    }
+}
+
+// ============ LEVEL GENERATION ============
+function generateLevelStructure(levelNum) {
+    platforms = []; obstacles = []; coins = []; rockets = []; bombs = []; currentCameraY = 0;
+    let gapDistance = 53;
+    let pWidth = 135 - (levelNum * 2.5);
+    let horizontalSpeed = (levelNum > 3 && levelNum <= 10) ? Math.min(4, levelNum * 0.4) : 0;
+    if (levelNum >= 11) horizontalSpeed = Math.min(5.5, (levelNum - 10) * 0.8);
+    let seedY = 340; let indexCounter = 0;
+    while (seedY > -2500) {
+        indexCounter++;
+        let landscapeWobble = Math.sin(seedY * 0.015 + levelNum) * 210;
+        let targetX = (canvas.width / 2 - pWidth / 2) + landscapeWobble;
+        if (targetX < 60) targetX = 60;
+        if (targetX + pWidth > canvas.width - 60) targetX = canvas.width - pWidth - 60;
+        let spawnedAsCrumbler = (levelNum >= 11 && indexCounter % 2 === 0);
+        platforms.push(new Platform(targetX, seedY, pWidth, horizontalSpeed, spawnedAsCrumbler));
+        if (Math.random() > 0.35) coins.push(new Coin(targetX + pWidth/2 - 5, seedY - 20));
+        if (Math.random() < 0.14) rockets.push(new Rocket(targetX + 15, seedY - 24));
+        if (levelNum > 2 && Math.random() < 0.06) bombs.push(new Bomb(targetX + pWidth - 22, seedY - 18));
+        if (levelNum > 1 && Math.random() < 0.22 && !spawnedAsCrumbler) obstacles.push(new MorphingObstacle(targetX + 25, seedY - 12, 28, indexCounter));
+        seedY -= gapDistance;
+    }
+    giantShawarma = new GiantShawarmaTarget(seedY - 60);
+    platforms.push(new Platform(canvas.width / 2 - 75, seedY + 60, 150, 0, false));
+}
+
+// ============ PHYSICS ============
+function verifyPhysicsTick() {
+    if (player.vy >= 0) {
+        for (let p of platforms) {
+            if (!p.dead && player.x + player.width > p.x && player.x < p.x + p.width &&
+                player.y + player.height >= p.y && player.y + player.height <= p.y + p.height + player.vy) {
+                player.y = p.y - player.height; player.vy = 0; player.onGround = true;
+                if (p.speed > 0) player.x += p.speed * p.dir;
+                if (p.isCrumbling && p.shatterTimer === -1) p.shatterTimer = 32;
+            }
+        }
+    }
+    for (let c of coins) {
+        if (!c.collected && player.x < c.x + 14 && player.x + player.width > c.x && player.y < c.y + 14 && player.y + player.height > c.y) {
+            c.collected = true; walletCoins++; Sound.coin();
+            saveAccountStateToDisk(); document.getElementById('hud-coins').innerText = walletCoins;
+        }
+    }
+    for (let r of rockets) {
+        if (!r.used && player.x < r.x + r.w && player.x + player.width > r.x && player.y < r.y + r.h && player.y + player.height > r.y) {
+            r.used = true;
+            let thrustForce = shopData.rockets[activeSelections.rockets].val;
+            player.vy = thrustForce; player.onGround = false; Sound.rocket();
+        }
+    }
+    for (let b of bombs) {
+        if (player.x < b.x + b.w && player.x + player.width > b.x && player.y < b.y + b.h && player.y + player.height > b.y) {
+            launchSelectedMap(activeLevel); return;
+        }
+    }
+    for (let o of obstacles) {
+        if (player.x < o.x + o.width && player.x + player.width > o.x && player.y < o.y + o.height && player.y + player.height > o.y) {
+            triggerCrashedState(); return;
+        }
+    }
+    if (player.x < giantShawarma.x + giantShawarma.width && player.x + player.width > giantShawarma.x &&
+        player.y < giantShawarma.y + giantShawarma.height && player.y + player.height > giantShawarma.y) {
+        triggerVictoryClearState();
+    }
+}
+
+function triggerCrashedState() {
+    currentGameState = STATE.GAMEOVER; Sound.fail();
+    hideGameHUD();
+    document.getElementById('gameover-screen').classList.remove('hidden');
+    if (gameMode !== 'solo') {
+        addChatMessage('SYSTEM', playerNickname + ' crashed!', 'system');
+    }
+}
+
+function triggerVictoryClearState() {
+    completedLevels[activeLevel] = true;
+    playerFinished = true;
+    saveAccountStateToDisk();
+
+    if (gameMode === 'solo') {
+        currentGameState = STATE.WIN; Sound.win();
+        hideGameHUD();
+        document.getElementById('win-screen').classList.remove('hidden');
+    } else {
+        // Race mode - check who finished first
+        if (!opponentFinished) {
+            // Player wins the race!
+            currentGameState = STATE.WIN;
+            hideGameHUD();
+            if (gameMode === 'friend' && peerChannel) {
+                peerChannel.postMessage({ type: 'race-finish', name: playerNickname });
+            }
+            showRaceResult(true);
+            completedLevels[activeLevel] = true;
+            saveAccountStateToDisk();
+            document.getElementById('win-screen').classList.remove('hidden');
+        } else {
+            // Opponent already finished
+            currentGameState = STATE.WIN;
+            hideGameHUD();
+            showRaceResult(false, gameMode === 'bot' ? '🤖 BOT' : friendPeerData.name);
+            document.getElementById('win-screen').classList.remove('hidden');
+        }
+    }
+}
+
+function hideGameHUD() {
+    document.getElementById('hud').classList.add('hidden');
+    document.getElementById('side-action-tray').classList.add('hidden');
+    document.getElementById('ingame-escape-panel').classList.add('hidden');
+    document.getElementById('versus-hud').classList.add('hidden');
+}
+
+// ============ BOT AI ============
+function updateBotOpponent() {
+    if (gameMode !== 'bot' || currentGameState !== STATE.PLAYING) return;
+    
+    // Bot climbs at a variable speed based on level difficulty
+    let elapsed = (Date.now() - raceStartTime) / 1000;
+    let baseSpeed = 12 + activeLevel * 2; // meters per second
+    // Add some randomness so bot isn't perfectly consistent
+    let jitter = Math.sin(elapsed * 2.3) * 8 + Math.sin(elapsed * 0.7) * 15;
+    opponentHeight = Math.floor(elapsed * baseSpeed + jitter);
+    
+    // Clamp to max possible height
+    let maxH = Math.floor(2900 * 0.4);
+    if (opponentHeight >= maxH && !opponentFinished) {
+        opponentFinished = true;
+        if (!playerFinished) {
+            showRaceResult(false, '🤖 BOT');
+            currentGameState = STATE.WIN;
+            hideGameHUD();
+            document.getElementById('win-screen').classList.remove('hidden');
+        }
+    }
+    opponentHeight = Math.min(opponentHeight, maxH);
+}
+
+function updateFriendOpponent() {
+    if (gameMode !== 'friend' || currentGameState !== STATE.PLAYING) return;
+    opponentHeight = friendPeerData.height || 0;
+}
+
+// ============ BACKGROUND & RENDER ============
+function drawMovingBackground() {
+    let baseHue = 240;
+    if (activeLevel >= 6 && activeLevel <= 10) baseHue = 290;
+    else if (activeLevel >= 11) baseHue = 15;
+    let skyGradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+    skyGradient.addColorStop(0, `hsl(${baseHue}, 70%, 5%)`);
+    skyGradient.addColorStop(0.5, `hsl(${baseHue + 20}, 50%, 12%)`);
+    skyGradient.addColorStop(1, `hsl(${baseHue + 40}, 60%, 22%)`);
+    ctx.fillStyle = skyGradient; ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.fillStyle = `hsla(${baseHue}, 40%, 8%, 0.4)`;
+    for (let i = 0; i < 3; i++) {
+        let parallelSpeed = (currentCameraY * (0.15 + i * 0.1)) % 220;
+        ctx.beginPath(); ctx.moveTo(0, canvas.height);
+        ctx.lineTo(0, 240 + i * 40 - parallelSpeed);
+        ctx.lineTo(canvas.width * 0.3, 160 + i * 40 - parallelSpeed);
+        ctx.lineTo(canvas.width * 0.7, 280 + i * 30 - parallelSpeed);
+        ctx.lineTo(canvas.width, 200 + i * 50 - parallelSpeed);
+        ctx.lineTo(canvas.width, canvas.height); ctx.fill();
+    }
+}
+
+// Draw opponent ghost indicator on side
+function drawOpponentIndicator() {
+    if (gameMode === 'solo') return;
+    let playerH = Math.max(0, Math.floor((400 - player.y) * 0.4));
+    let oppH = opponentHeight;
+    
+    // Show a small marker on the right edge showing relative position
+    let diff = oppH - playerH;
+    let markerY = canvas.height / 2 - (diff * 0.3);
+    markerY = Math.max(20, Math.min(canvas.height - 20, markerY));
+    
+    ctx.save();
+    ctx.fillStyle = gameMode === 'bot' ? '#00ffcc' : '#ff9900';
+    ctx.globalAlpha = 0.7;
+    // Arrow indicator
+    ctx.beginPath();
+    ctx.moveTo(canvas.width - 5, markerY);
+    ctx.lineTo(canvas.width - 20, markerY - 8);
+    ctx.lineTo(canvas.width - 20, markerY + 8);
+    ctx.fill();
+    // Label
+    ctx.font = 'bold 10px Impact, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText(gameMode === 'bot' ? 'BOT' : friendPeerData.name, canvas.width - 22, markerY + 4);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+}
+
+function update() {
+    if (currentGameState !== STATE.PLAYING) return;
+    player.update();
+    platforms.forEach(p => p.update());
+    let cameraTargetY = player.y - canvas.height / 2;
+    currentCameraY += (cameraTargetY - currentCameraY) * 0.12;
+    verifyPhysicsTick();
+    if (player.y > 450 && currentCameraY > 80) triggerCrashedState();
+    
+    let h = Math.max(0, Math.floor((400 - player.y) * 0.4));
+    document.getElementById('hud-height').innerText = h;
+
+    // Update opponent
+    if (gameMode === 'bot') updateBotOpponent();
+    if (gameMode === 'friend') updateFriendOpponent();
+
+    // Update versus HUD
+    if (gameMode !== 'solo') {
+        document.getElementById('vs-you-height').innerText = h + 'm';
+        document.getElementById('vs-opp-height').innerText = opponentHeight + 'm';
+    }
+
+    // Broadcast to friend
+    if (gameMode === 'friend' && Date.now() % 3 === 0) broadcastMyState();
+}
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    drawMovingBackground();
+    platforms.forEach(p => p.draw());
+    obstacles.forEach(o => o.draw());
+    coins.forEach(c => c.draw());
+    rockets.forEach(r => r.draw());
+    bombs.forEach(b => b.draw());
+    if (giantShawarma) giantShawarma.draw();
+    player.draw();
+    drawOpponentIndicator();
+}
+
+function processFrameTick() { update(); draw(); requestAnimationFrame(processFrameTick); }
+
+// ============ SHOP ============
+function switchShopTab(tabName) {
+    activeShopTab = tabName;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`tab-${tabName}`).classList.add('active');
+    renderShopGrid();
+}
+
+function renderShopGrid() {
+    const frame = document.getElementById('shop-items-binder'); frame.innerHTML = '';
+    let itemsPack = shopData[activeShopTab];
+    itemsPack.forEach((item, idx) => {
+        const card = document.createElement('div');
+        let chosen = activeSelections[activeShopTab] === idx;
+        card.className = `shop-card ${chosen ? 'selected' : ''}`;
+        let actionsLabel = item.owned ? (chosen ? '✅ EQUIPPED' : 'EQUIP') : `BUY (${item.cost} 💰)`;
+        if (activeShopTab === 'items') actionsLabel = `BUY (${item.cost} 💰)`;
+
+        let visualHook = '';
+        if (activeShopTab === 'chars') visualHook = `<div style="width:24px;height:24px;background:${item.val};margin:8px auto;border-radius:4px;border:1px solid #fff;"></div>`;
+        if (activeShopTab === 'clothes') visualHook = `<div style="color:${item.val==='none'?'#fff':item.val}; font-size:0.8rem; margin:8px 0;">Preview: ${item.name}</div>`;
+        if (activeShopTab === 'rockets') visualHook = `<div style="color:#00ffcc; font-size:0.85rem; margin:6px 0;">Power: ${Math.abs(item.val)}</div>`;
+        if (activeShopTab === 'pets') visualHook = `<div style="color:#ffcc00; font-size:0.85rem; margin:6px 0;">✨ ${item.val === 'none' ? 'None' : item.val.toUpperCase()}</div>`;
+        if (activeShopTab === 'items') visualHook = `<div style="color:#ff1744;font-size:0.85rem;margin:6px 0;">Owned: x${item.count}</div>`;
+
+        let btnStyle = item.owned ? (chosen ? 'background:#4caf50;' : 'background:#ff9900;') : 'background:#2196f3;';
+        card.innerHTML = `
+            <h4>${item.name}</h4>
+            ${visualHook}
+            <div class="price-tag">${item.cost > 0 && !item.owned ? '💰 ' + item.cost : (activeShopTab === 'items' ? '💰 '+item.cost+'/ea' : '✅ OWNED')}</div>
+            <button class="btn" style="font-size:0.7rem; padding:4px 10px; margin-top:5px; ${btnStyle}" onclick="processShopPurchase('${activeShopTab}', ${idx})">${actionsLabel}</button>
+        `;
+        frame.appendChild(card);
+    });
+}
+
+function processShopPurchase(tab, idx) {
+    let target = shopData[tab][idx];
+    if (tab === 'items') {
+        if (walletCoins >= target.cost) {
+            walletCoins -= target.cost; target.count++; Sound.coin();
+            saveAccountStateToDisk(); updateWalletDisplays(); renderShopGrid();
+        }
+        return;
+    }
+    if (!target.owned) {
+        if (walletCoins >= target.cost) {
+            walletCoins -= target.cost; target.owned = true; Sound.coin();
+            activeSelections[tab] = idx;
+        }
+    } else {
+        activeSelections[tab] = idx;
+    }
+    saveAccountStateToDisk(); updateWalletDisplays(); renderShopGrid();
+}
+
+function updateWalletDisplays() {
+    document.getElementById('menu-wallet').innerText = walletCoins;
+    document.getElementById('shop-wallet').innerText = walletCoins;
+    document.getElementById('hud-coins').innerText = walletCoins;
+    document.getElementById('mode-wallet').innerText = walletCoins;
+    document.getElementById('count-pocket-rocket').innerText = 'x' + shopData.items[0].count;
+    document.getElementById('shop-player-badge').innerText = '👤 ' + (playerNickname || 'PLAYER');
+}
+
+function populateMapSelectionMatrix() {
+    const list = document.getElementById('map-buttons-container'); list.innerHTML = '';
+    let modeLabel = gameMode === 'solo' ? 'Solo' : (gameMode === 'bot' ? 'VS Bot' : 'VS Friend');
+    document.getElementById('select-mode-label').textContent = 'Mode: ' + modeLabel;
+    for (let i = 1; i <= 15; i++) {
+        const btn = document.createElement('button'); let finished = completedLevels[i];
+        let tierStyle = i >= 11 ? 'shatter-tier' : '';
+        btn.className = `lvl-btn ${tierStyle} ${finished ? 'done' : ''}`;
+        btn.innerHTML = `<span>LVL ${i}</span><span class="status-tag">${finished ? '✅ DONE' : (i >= 11 ? '⚡ HARD' : 'PLAY')}</span>`;
+        btn.onclick = () => launchSelectedMap(i); list.appendChild(btn);
+    }
+}
+
+function launchSelectedMap(levelNumber) {
+    Sound.init(); activeLevel = levelNumber;
+    document.getElementById('hud-level').innerText = levelNumber;
+    document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById('race-result-banner').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('side-action-tray').classList.remove('hidden');
+    document.getElementById('ingame-escape-panel').classList.remove('hidden');
+
+    // Reset race state
+    opponentHeight = 0;
+    opponentFinished = false;
+    playerFinished = false;
+    raceActive = true;
+    raceStartTime = Date.now();
+
+    // Show versus HUD + chat for non-solo modes
+    if (gameMode !== 'solo') {
+        document.getElementById('versus-hud').classList.remove('hidden');
+        document.getElementById('chat-panel').classList.remove('hidden');
+        document.getElementById('vs-you-name').textContent = playerNickname || 'YOU';
+        document.getElementById('vs-opp-name').textContent = gameMode === 'bot' ? '🤖 BOT' : (friendPeerData.name || 'FRIEND');
+        
+        chatMessages = [];
+        addChatMessage('SYSTEM', 'Race started! First to the top wins!', 'system');
+        
+        if (gameMode === 'bot') {
+            startBotTaunting();
+            setTimeout(() => addChatMessage('🤖 BOT', pickRandom(botResponses.greetings), 'bot'), 800);
+        }
+    } else {
+        document.getElementById('versus-hud').classList.add('hidden');
+        document.getElementById('chat-panel').classList.add('hidden');
+    }
+
+    player.reset(); generateLevelStructure(levelNumber); updateWalletDisplays();
+    currentGameState = STATE.PLAYING;
+}
+
+// ============ MODE SELECTION ============
+function selectMode(mode) {
+    gameMode = mode;
+    document.querySelectorAll('.mode-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('mode-' + mode).classList.add('selected');
+    
+    let friendSection = document.getElementById('friend-link-section');
+    if (mode === 'friend') {
+        friendSection.classList.remove('hidden');
+        setupFriendMode();
+    } else {
+        friendSection.classList.add('hidden');
+    }
+}
+
+// ============ SCREEN NAVIGATION ============
+function showScreen(screenId) {
+    document.querySelectorAll('.ui-screen').forEach(s => s.classList.add('hidden'));
+    document.getElementById(screenId).classList.remove('hidden');
+    hideGameHUD();
+    document.getElementById('chat-panel').classList.add('hidden');
+    document.getElementById('race-result-banner').classList.add('hidden');
+}
+
+// ============ EVENT LISTENERS ============
+function configureInterfaceControls() {
+    // Login color picker
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+        swatch.addEventListener('click', (e) => {
+            document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+            e.target.classList.add('selected');
+            playerBaseColor = e.target.getAttribute('data-color');
+        });
+    });
+
+    // Save profile
+    document.getElementById('btn-save-profile').addEventListener('click', () => {
+        let nameInput = document.getElementById('nickname-input').value.trim();
+        if (nameInput === "") { alert("Please enter a name!"); return; }
+        playerNickname = nameInput.toUpperCase();
+        shopData.chars[0].val = playerBaseColor;
+        shopData.chars[0].name = `${playerNickname}'s Skin`;
+        saveAccountStateToDisk();
+        showScreen('mode-screen');
+        document.getElementById('mode-greeting').innerText = `Welcome, ${playerNickname}!`;
+        updateWalletDisplays();
+        currentGameState = STATE.MODE;
+    });
+
+    // Mode screen
+    document.getElementById('btn-mode-play').addEventListener('click', () => {
+        if (!document.querySelector('.mode-card.selected')) {
+            selectMode('solo'); // default
+        }
+        populateMapSelectionMatrix();
+        showScreen('select-screen');
+    });
+    document.getElementById('btn-mode-shop').addEventListener('click', () => {
+        updateWalletDisplays(); switchShopTab('chars');
+        showScreen('shop-screen');
+    });
+
+    // Copy friend link
+    document.getElementById('btn-copy-link').addEventListener('click', () => {
+        let linkInput = document.getElementById('friend-link-input');
+        linkInput.select();
+        navigator.clipboard.writeText(linkInput.value).then(() => {
+            document.getElementById('btn-copy-link').textContent = '✅ COPIED!';
+            setTimeout(() => document.getElementById('btn-copy-link').textContent = '📋 COPY LINK', 2000);
+        }).catch(() => {
+            document.execCommand('copy');
+            document.getElementById('btn-copy-link').textContent = '✅ COPIED!';
+            setTimeout(() => document.getElementById('btn-copy-link').textContent = '📋 COPY LINK', 2000);
+        });
+    });
+    document.getElementById('btn-new-room').addEventListener('click', () => {
+        roomId = generateRoomId();
+        updateFriendLink();
+        setupBroadcastChannel();
+    });
+
+    // Chat
+    document.getElementById('chat-send').addEventListener('click', sendChatMessage);
+    document.getElementById('chat-input-box').addEventListener('keydown', (e) => {
+        e.stopPropagation(); // Prevent game controls while typing
+        if (e.key === 'Enter') sendChatMessage();
+    });
+    document.getElementById('chat-toggle').addEventListener('click', () => {
+        chatMinimized = !chatMinimized;
+        document.getElementById('chat-body').style.display = chatMinimized ? 'none' : 'block';
+        document.getElementById('chat-collapse-icon').textContent = chatMinimized ? '▲' : '▼';
+    });
+
+    // Race result continue
+    document.getElementById('btn-race-continue').addEventListener('click', () => {
+        document.getElementById('race-result-banner').classList.add('hidden');
+    });
+
+    // Old menu buttons (fallback)
+    document.getElementById('btn-go-select').addEventListener('click', () => {
+        populateMapSelectionMatrix(); showScreen('select-screen');
+    });
+    document.getElementById('btn-select-back').addEventListener('click', () => {
+        showScreen('mode-screen');
+        document.getElementById('mode-greeting').innerText = `Welcome, ${playerNickname}!`;
+        updateWalletDisplays();
+    });
+    document.getElementById('btn-go-shop').addEventListener('click', () => {
+        updateWalletDisplays(); switchShopTab('chars'); showScreen('shop-screen');
+    });
+    document.getElementById('btn-shop-back').addEventListener('click', () => {
+        showScreen('mode-screen');
+        document.getElementById('mode-greeting').innerText = `Welcome, ${playerNickname}!`;
+        updateWalletDisplays();
+    });
+    document.getElementById('btn-retry').addEventListener('click', () => { launchSelectedMap(activeLevel); });
+    document.getElementById('btn-menu-back').addEventListener('click', () => {
+        populateMapSelectionMatrix(); showScreen('select-screen');
+    });
+    document.getElementById('btn-win-back').addEventListener('click', () => {
+        populateMapSelectionMatrix(); showScreen('select-screen');
+    });
+    document.getElementById('btn-next-level').addEventListener('click', () => {
+        launchSelectedMap(Math.min(15, activeLevel + 1));
+    });
+    document.getElementById('btn-quick-restart').addEventListener('click', () => { launchSelectedMap(activeLevel); });
+    document.getElementById('btn-quick-quit').addEventListener('click', () => {
+        populateMapSelectionMatrix(); showScreen('select-screen');
+        currentGameState = STATE.SELECT;
+    });
+
+    // Pocket rocket
+    document.getElementById('btn-use-pocket-rocket').addEventListener('click', () => {
+        let rocketItem = shopData.items[0];
+        if (rocketItem.count > 0 && currentGameState === STATE.PLAYING) {
+            rocketItem.count--; Sound.rocket(); saveAccountStateToDisk();
+            player.y = giantShawarma.y + 45; player.vy = 0; updateWalletDisplays();
+        }
+    });
+
+    // Keyboard
+    window.addEventListener('keydown', (e) => {
+        // Don't capture keys when typing in chat
+        if (document.activeElement === document.getElementById('chat-input-box')) return;
+        if (document.activeElement === document.getElementById('nickname-input')) return;
+        if (document.activeElement === document.getElementById('friend-link-input')) return;
+        
+        keys[e.code] = true;
+        if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+            if (e.code === 'Space') e.preventDefault();
+            player.jump();
+        }
+    });
+    window.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    // Touch controls for mobile
+    let touchStartX = 0;
+    canvas.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        let touch = e.touches[0];
+        touchStartX = touch.clientX;
+        player.jump();
+    }, { passive: false });
+    canvas.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        let touch = e.touches[0];
+        let dx = touch.clientX - touchStartX;
+        if (dx > 20) { keys['ArrowRight'] = true; keys['ArrowLeft'] = false; }
+        else if (dx < -20) { keys['ArrowLeft'] = true; keys['ArrowRight'] = false; }
+        else { keys['ArrowLeft'] = false; keys['ArrowRight'] = false; }
+    }, { passive: false });
+    canvas.addEventListener('touchend', () => {
+        keys['ArrowLeft'] = false; keys['ArrowRight'] = false;
+    });
+}
+
+// ============ INIT ============
+function initializeGame() {
+    configureInterfaceControls();
+    generateLevelStructure(1);
+
+    // Check URL for friend room
+    let params = new URLSearchParams(window.location.search);
+    let hasRoom = params.get('room');
+
+    let hasData = loadAccountStateFromDisk();
+
+    if (!hasData || !playerNickname) {
+        currentGameState = STATE.LOGIN;
+        showScreen('login-screen');
+    } else {
+        currentGameState = STATE.MODE;
+        showScreen('mode-screen');
+        document.getElementById('mode-greeting').innerText = `Welcome, ${playerNickname}!`;
+
+        // If opened with a room link, auto-select friend mode
+        if (hasRoom) {
+            selectMode('friend');
+        }
+    }
+
+    updateWalletDisplays();
+    
+    // Default select solo mode
+    selectMode('solo');
+    
+    processFrameTick();
+}
+
+initializeGame();
+</script>
+
+</body>
+</html>
